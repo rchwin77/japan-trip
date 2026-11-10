@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#c8102e">
+<meta name="robots" content="noindex, nofollow">
+<title>전망대에서 호텔 가는 길</title>
+<style>
+:root{--bg:#f6f4f1;--card:#fff;--ink:#1d1b19;--sub:#6b665f;--line:#e6e1da;--accent:#c8102e;--accent-soft:#fbe9ec;
+  --jr:#80c241;--kq:#e5171f;--warn:#a46a00;--warn-soft:#fff4dc;--radius:14px}
+@media (prefers-color-scheme:dark){:root{--bg:#141312;--card:#1f1d1b;--ink:#f1eee9;--sub:#a59f97;--line:#34302c;
+  --accent:#ff5a6e;--accent-soft:#3a1d22;--warn:#f2c35b;--warn-soft:#3a2f17}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-text-size-adjust:100%;
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif}
+a{color:var(--accent)}
+header{background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 18px}
+header a{color:#fff;font-size:14px;text-decoration:none;opacity:.9}
+header h1{margin:8px 0 0;font-size:21px}
+header p{margin:4px 0 0;font-size:13px;opacity:.9}
+main{max-width:640px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 8px}
+.sum{display:flex;justify-content:space-between;text-align:center}
+.sum div{flex:1}.sum b{display:block;font-size:20px}.sum span{font-size:12px;color:var(--sub)}
+.steps{list-style:none;margin:0;padding:0;position:relative}
+.step{display:flex;gap:12px;padding-bottom:16px;position:relative}
+.step:not(:last-child):before{content:"";position:absolute;left:15px;top:32px;bottom:0;width:4px;background:var(--c,var(--line));border-radius:2px}
+.dot{flex:none;width:34px;height:34px;border-radius:50%;background:var(--c,var(--sub));color:#fff;font-weight:800;display:grid;place-items:center;font-size:13px}
+.step h3{margin:4px 0 2px;font-size:16px}
+.step p{margin:0;font-size:14px;color:var(--sub)}
+.step .jp{color:var(--ink);font-weight:600}
+.walk{--c:#9a948c}.jr{--c:var(--jr)}.kq{--c:var(--kq)}.goal{--c:var(--accent)}
+.warn{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin:8px 0 0}
+.warn b{color:inherit}
+.btn{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;margin-bottom:10px;border:1px solid var(--line);color:var(--ink);background:var(--card)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.taxi{font-size:22px;font-weight:800;line-height:1.4;text-align:center;padding:18px 10px}
+.taxi small{display:block;font-size:14px;font-weight:500;color:var(--sub);margin-top:6px}
+ul.tips{margin:0;padding-left:18px;font-size:14px}
+ul.tips li{margin:4px 0}
+.src{font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <a href="./">← 여행 메인</a>
+  <h1>시부야 스카이 → 호텔</h1>
+  <p>3일차(11/17) 시부야 일정 뒤 대중교통으로 숙소 들어가기</p>
+</header>
+<main>
+  <a class="btn primary" target="_blank" rel="noopener"
+     href="https://www.google.com/maps/dir/?api=1&origin=SHIBUYA+SKY&destination=hotel+MONday+Haneda+Airport&travelmode=transit">구글맵으로 지금 시간 경로 보기</a>
+
+  <div class="card">
+    <div class="sum">
+      <div><b>약 45분</b><span>총 소요</span></div>
+      <div><b>환승 1~2회</b><span>JR → 京急</span></div>
+      <div><b>500엔대</b><span>1인 대략 (IC카드)</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>가는 순서</h2>
+    <ol class="steps">
+      <li class="step walk"><div class="dot">1</div><div>
+        <h3>전망대에서 내려와 시부야역으로</h3>
+        <p>시부야 스크램블 스퀘어 건물이 시부야역과 바로 연결돼 있어요. 안내판의 <span class="jp">JR線</span> 표시를 따라가세요.</p>
+      </div></li>
+      <li class="step jr"><div class="dot">2</div><div>
+        <h3>JR 야마노테선 (연두색) → 시나가와</h3>
+        <p><span class="jp">山手線 恵比寿・品川 方面</span> 승강장에서 탑승. 5정거장, 약 12분.<br>에비스 → 메구로 → 고탄다 → 오사키 → <b>시나가와(品川)</b> 하차</p>
+      </div></li>
+      <li class="step kq"><div class="dot">3</div><div>
+        <h3>시나가와에서 京急線(케이큐, 빨간색) 환승</h3>
+        <p>역 안의 <span class="jp">京急線 のりかえ</span> 환승 개찰구로 가서 <span class="jp">羽田空港 方面</span> 열차를 타세요. 약 15~20분.</p>
+        <div class="warn"><b>열차 종류를 꼭 보세요.</b> 우리 역 <b>大鳥居(오토리이)</b>에 서는 건 <b>特急 · 急行 · 普通</b>이에요.<br><b>快特 · エアポート快特</b>는 오토리이를 그냥 지나가요. 快特를 탔다면 <b>京急蒲田(케이큐 가마타)</b>에서 내려 普通/急行로 갈아타세요.</div>
+      </div></li>
+      <li class="step goal"><div class="dot">4</div><div>
+        <h3>大鳥居(오토리이)역 西口(서쪽 출구) → 도보 2분</h3>
+        <p>호텔 MONday 하네다 에어포트 도착</p>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>택시 기사님께 보여주기</h2>
+    <div class="taxi">ホテルMONday 羽田空港<br>東京都大田区萩中3-6-9<small>京急 大鳥居駅 西口 徒歩2分 · TEL 03-3743-1601</small></div>
+    <p class="src">택시는 약 30~40분 걸리고 요금이 꽤 나와요. 금액은 GO 앱이나 구글맵에서 확인하세요.</p>
+  </div>
+
+  <div class="card">
+    <h2>알아두면 좋은 것</h2>
+    <ul class="tips">
+      <li>시부야 스카이 운영 10:00~22:30, <b>마지막 입장 21:20</b>. 날씨가 나쁘면 옥상이 닫힐 수 있어요.</li>
+      <li>옥상(스카이 스테이지)에는 가방·모자·셀카봉을 못 가지고 올라가요(사물함 이용). 바람이 세면 옥상이 닫혀요.</li>
+      <li>Suica/PASMO 같은 교통카드(또는 모바일 Suica)로 찍고 타면 JR→京急 환승도 편해요. 금액은 대략값이에요.</li>
+      <li>밤 10시대에 출발해도 막차까지 여유가 있지만, 늦어지면 구글맵에서 막차를 한 번 확인하세요.</li>
+      <li>가족이 흩어지지 않게 시나가와 환승 때 한 번 모이기.</li>
+    </ul>
+  </div>
+
+  <p class="src">참고: 시부야 스카이 운영시간 GO TOKYO, 호텔 주소·출구 hotel-monday.com, 오토리이 정차 열차 종류 rosen-zu.net (2026-11-10 확인). 실제 운행은 현장 안내를 우선하세요.</p>
+</main>
+</body>
+</html>
