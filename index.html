@@ -30,7 +30,7 @@ header p{margin:6px 0 0;font-size:13px;opacity:.92}
 #dday{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);padding:5px 12px;border-radius:99px;font-size:14px;font-weight:800}
 header svg{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:auto;z-index:1;display:block}
 nav{position:sticky;top:0;z-index:5;display:flex;background:var(--card);border-bottom:1px solid var(--line)}
-nav button{flex:1;border:0;background:none;padding:13px 0;font-size:15px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
+nav button{flex:1;border:0;background:none;padding:13px 0;font-size:14px;white-space:nowrap;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
 nav button.on{color:var(--accent);border-color:var(--accent)}
 main{max-width:640px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
 section{display:none}section.on{display:block}
@@ -55,6 +55,16 @@ section{display:none}section.on{display:block}
 .item.pending .t:before{content:"?";}
 .item.sub{color:var(--sub);font-size:13px}
 .meals{margin-top:6px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px;color:var(--sub)}
+.spot{padding:10px 0;display:flex;gap:10px;align-items:flex-start}
+.spot+.spot{border-top:1px dashed var(--line)}
+.spot .nm{font-weight:700;font-size:15px}
+.spot .wh{font-size:13px;color:var(--sub)}
+.spot a.map{flex:none;font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink);background:var(--bg)}
+.steps-tf p{margin:6px 0;font-size:14px}
+.addrow{display:flex;gap:8px;margin-top:10px}
+.addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px;background:var(--bg);color:var(--ink)}
+.addrow button{border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:#fff;font-weight:700;font-size:14px}
+.del{margin-left:auto;border:0;background:none;color:var(--sub);font-size:18px}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
@@ -103,11 +113,15 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
 </header>
 <nav>
   <button data-tab="plan" class="on">일정</button>
-  <button data-tab="links">참고 링크</button>
+  <button data-tab="food">맛집</button>
+  <button data-tab="shop">쇼핑</button>
+  <button data-tab="links">링크</button>
   <button data-tab="pack">준비물</button>
 </nav>
 <main>
   <section id="plan" class="on"></section>
+  <section id="food"></section>
+  <section id="shop"></section>
   <section id="links"></section>
   <section id="pack"></section>
   <footer id="foot"></footer>
@@ -169,6 +183,34 @@ function renderTrip(t){
   draw();
 }
 
+function renderFood(f){
+  const order = [...f.days].sort((a, b) => (a.day || 9) - (b.day || 9));
+  $("#food").innerHTML = `<div class="note">${esc(f.intro)}</div>` + order.map(d => `<div class="card">
+    <h2>${d.day ? d.day + "일차 저녁 · " : ""}${esc(d.area)}</h2>
+    ${d.spots.map(s => `<div class="spot"><div style="flex:1"><div class="nm">${esc(s.name)} <span class="tag">${esc(s.tag)}</span></div><div class="wh">${esc(s.what)}</div></div>
+      <a class="map" target="_blank" rel="noopener" href="https://www.google.com/maps/search/${encodeURIComponent(s.q)}">지도</a></div>`).join("")}
+  </div>`).join("");
+}
+function renderShop(sh){
+  const done = store.get("shop", {}), mine = store.get("shopMine", []);
+  const box = $("#shop");
+  const draw = () => {
+    const all = sh.groups.flatMap(g => g.items).concat(mine);
+    const n = all.filter(i => done[i]).length;
+    let h = `<div class="card steps-tf"><h2>바뀐 면세 환급 방법</h2>${sh.taxfree.map((t, i) => `<p${i === sh.taxfree.length - 1 ? ' style="color:var(--accent);font-weight:700"' : ""}>${esc(t)}</p>`).join("")}<p class="count" style="margin-top:8px">${esc(sh.taxfreeNote)}</p></div>`;
+    h += `<p class="count">살 것 ${n} / ${all.length} 체크 · 이 폰에만 저장돼요</p>`;
+    h += sh.groups.map(g => `<div class="card check"><h2>${esc(g.name)}</h2>${g.items.map(i => `<label><input type="checkbox" data-k="${esc(i)}" ${done[i] ? "checked" : ""}><span>${esc(i)}</span></label>`).join("")}</div>`).join("");
+    h += `<div class="card check"><h2>내가 추가한 것</h2>${mine.map((i, x) => `<label><input type="checkbox" data-k="${esc(i)}" ${done[i] ? "checked" : ""}><span>${esc(i)}</span><button class="del" data-x="${x}" aria-label="삭제">×</button></label>`).join("") || '<p class="count">아직 없어요</p>'}
+      <div class="addrow"><input id="newItem" placeholder="예: 동전파스, 곤약젤리" maxlength="60"><button id="addItem">추가</button></div></div>`;
+    box.innerHTML = h;
+    box.querySelectorAll("input[data-k]").forEach(el => el.onchange = () => { done[el.dataset.k] = el.checked; store.set("shop", done); draw(); });
+    box.querySelectorAll(".del").forEach(b => b.onclick = e => { e.preventDefault(); mine.splice(+b.dataset.x, 1); store.set("shopMine", mine); draw(); });
+    const add = () => { const v = $("#newItem").value.trim(); if (v && !mine.includes(v)) { mine.push(v); store.set("shopMine", mine); } draw(); };
+    $("#addItem").onclick = add; $("#newItem").onkeydown = e => { if (e.key === "Enter") add(); };
+  };
+  draw();
+}
+
 let LINKS = [], GROUPS = [], filter = store.get("gfilter", "all");
 function linkCard(l){
   const sum = l.summary ? `<div class="sum">${esc(l.summary)}</div>` : `<div class="sum empty">아직 내용을 확인하지 못했어요. 링크를 열어 확인해 주세요.</div>`;
@@ -212,7 +254,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
   $("#foot").textContent = `링크 ${LINKS.length}개`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
