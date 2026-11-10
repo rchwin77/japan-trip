@@ -30,7 +30,7 @@ header p{margin:6px 0 0;font-size:13px;opacity:.92}
 #dday{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);padding:5px 12px;border-radius:99px;font-size:14px;font-weight:800}
 header svg{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:auto;z-index:1;display:block}
 nav{position:sticky;top:0;z-index:5;display:flex;background:var(--card);border-bottom:1px solid var(--line)}
-nav button{flex:1;border:0;background:none;padding:13px 0;font-size:14px;white-space:nowrap;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
+nav button{flex:1;border:0;background:none;padding:13px 0;font-size:13.5px;white-space:nowrap;letter-spacing:-.3px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
 nav button.on{color:var(--accent);border-color:var(--accent)}
 main{max-width:640px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
 section{display:none}section.on{display:block}
@@ -65,6 +65,30 @@ section{display:none}section.on{display:block}
 .addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px;background:var(--bg);color:var(--ink)}
 .addrow button{border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:#fff;font-weight:700;font-size:14px}
 .del{margin-left:auto;border:0;background:none;color:var(--sub);font-size:18px}
+.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.wx div{background:var(--bg);border-radius:10px;padding:8px 2px;font-size:12px;color:var(--sub)}
+.wx b{display:block;font-size:22px;margin:2px 0}
+.wx .t{color:var(--ink);font-weight:700;font-size:13px}
+.fx{display:flex;gap:8px;align-items:center}
+.fx input,.fx select{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:17px;background:var(--bg);color:var(--ink)}
+.fx span{flex:none;font-weight:700;width:22px}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.quick button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:99px;padding:5px 10px;font-size:13px}
+.ledger{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.ledger td{padding:7px 2px;border-top:1px dashed var(--line)}
+.ledger td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.em a{display:flex;justify-content:space-between;align-items:center;padding:10px 0;text-decoration:none;color:var(--ink);border-top:1px dashed var(--line)}
+.em a:first-of-type{border-top:0}
+.em a{gap:10px}.em a b{color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ph{padding:10px 0;border-top:1px dashed var(--line);cursor:pointer}
+.ph:first-of-type{border-top:0}
+.ph .ko{font-size:13px;color:var(--sub)}
+.ph .ja{font-size:19px;font-weight:700}
+.ph .rd{font-size:12px;color:var(--sub)}
+#big{position:fixed;inset:0;z-index:20;background:var(--card);display:none;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center}
+#big.on{display:flex}
+#big .ja{font-size:40px;font-weight:800;line-height:1.3}
+#big .ko{margin-top:16px;color:var(--sub);font-size:16px}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
@@ -117,6 +141,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <button data-tab="shop">쇼핑</button>
   <button data-tab="links">링크</button>
   <button data-tab="pack">준비물</button>
+  <button data-tab="tools">도구</button>
 </nav>
 <main>
   <section id="plan" class="on"></section>
@@ -124,8 +149,10 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <section id="shop"></section>
   <section id="links"></section>
   <section id="pack"></section>
+  <section id="tools"></section>
   <footer id="foot"></footer>
 </main>
+<div id="big" role="dialog"><div class="ja"></div><div class="ko"></div><p class="count" style="margin-top:24px">화면을 누르면 닫혀요</p></div>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -211,6 +238,71 @@ function renderShop(sh){
   draw();
 }
 
+const WMO = c => c === 0 ? "☀️" : c <= 2 ? "🌤️" : c === 3 ? "☁️" : c <= 48 ? "🌫️" : c <= 67 ? "🌧️" : c <= 77 ? "🌨️" : c <= 82 ? "🌦️" : "⛈️";
+function renderTools(t){
+  const won = n => Math.round(n).toLocaleString("ko-KR");
+  let rate = store.get("rate", null);
+  const em = t.emergency.map(e => `<a href="tel:${esc(e.num.replace(/[^+\d]/g, ""))}"><span>${esc(e.name)}</span><b>${esc(e.num)}</b></a>`).join("");
+  const ph = t.phrases.map((p, i) => `<div class="ph" data-i="${i}"><div class="ko">${esc(p[0])}</div><div class="ja">${esc(p[1])}</div><div class="rd">${esc(p[2])}</div></div>`).join("");
+  $("#tools").innerHTML = `
+  <div class="card"><h2>여행 기간 날씨</h2><div id="wx"><p class="count">불러오는 중…</p></div></div>
+  <div class="card"><h2>환율 계산기</h2>
+    <div class="fx"><input id="jpy" type="number" inputmode="decimal" placeholder="엔"><span>¥</span></div>
+    <div class="fx" style="margin-top:8px"><input id="krw" type="number" inputmode="decimal" placeholder="원"><span>₩</span></div>
+    <div class="quick">${[100, 500, 1000, 3000, 5000, 10000].map(v => `<button data-y="${v}">${v.toLocaleString()}엔</button>`).join("")}</div>
+    <p class="count" id="rateInfo" style="margin-top:8px"></p></div>
+  <div class="card"><h2>경비 장부</h2>
+    <div class="fx"><input id="exWho" placeholder="누가" style="flex:.6"><input id="exWhat" placeholder="뭐에"></div>
+    <div class="fx" style="margin-top:8px"><input id="exAmt" type="number" inputmode="numeric" placeholder="엔 금액"><button class="btn primary" id="exAdd" style="flex:none;padding:10px 16px">추가</button></div>
+    <div id="exList"></div><p class="count">이 폰에만 저장돼요. 가족 공유는 안 돼요.</p></div>
+  <div class="card em"><h2>비상 연락처 (누르면 전화)</h2>${em}</div>
+  <div class="card"><h2>일본어 카드 (누르면 크게 보여요)</h2>${ph}</div>`;
+
+  // exchange
+  const jpy = $("#jpy"), krw = $("#krw"), info = $("#rateInfo");
+  const showRate = () => info.textContent = rate ? `100엔 = 약 ${won(rate.v * 100)}원 (${rate.d} 기준)` : "환율을 못 불러왔어요. 인터넷 연결 후 다시 열어 주세요.";
+  jpy.oninput = () => { if (rate) krw.value = jpy.value ? Math.round(jpy.value * rate.v) : ""; };
+  krw.oninput = () => { if (rate) jpy.value = krw.value ? Math.round(krw.value / rate.v) : ""; };
+  document.querySelectorAll(".quick button").forEach(b => b.onclick = () => { jpy.value = b.dataset.y; jpy.oninput(); });
+  showRate();
+  fetch("https://open.er-api.com/v6/latest/JPY").then(r => r.json()).then(j => {
+    if (j && j.rates && j.rates.KRW) { rate = {v: j.rates.KRW, d: new Date().toLocaleDateString("ko-KR")}; store.set("rate", rate); showRate(); jpy.oninput(); }
+  }).catch(() => {});
+
+  // ledger
+  const ex = store.get("expenses", []);
+  const drawEx = () => {
+    const tot = ex.reduce((a, e) => a + e.y, 0), by = {};
+    ex.forEach(e => by[e.who || "-"] = (by[e.who || "-"] || 0) + e.y);
+    const r = rate ? rate.v : 0;
+    $("#exList").innerHTML = ex.length ? `<table class="ledger">${ex.map((e, i) => `<tr><td>${esc(e.who)}</td><td>${esc(e.what)}</td><td class="r">¥${e.y.toLocaleString()}</td><td class="r"><button class="del" data-i="${i}" aria-label="삭제">×</button></td></tr>`).join("")}
+      <tr><td colspan="2"><b>합계</b> ${Object.entries(by).map(([k, v]) => `<span class="tag">${esc(k)} ¥${v.toLocaleString()}</span>`).join("")}</td><td class="r"><b>¥${tot.toLocaleString()}</b>${r ? `<br><small>약 ${won(tot * r)}원</small>` : ""}</td><td></td></tr></table>` : `<p class="count" style="margin-top:8px">아직 기록이 없어요</p>`;
+    $("#exList").querySelectorAll(".del").forEach(b => b.onclick = () => { ex.splice(+b.dataset.i, 1); store.set("expenses", ex); drawEx(); });
+  };
+  $("#exWho").value = store.get("lastWho", "");
+  $("#exAdd").onclick = () => {
+    const y = Math.round(+$("#exAmt").value); if (!y) return;
+    const who = $("#exWho").value.trim(); store.set("lastWho", who);
+    ex.push({who, what: $("#exWhat").value.trim(), y}); store.set("expenses", ex);
+    $("#exWhat").value = ""; $("#exAmt").value = ""; drawEx();
+  };
+  drawEx();
+
+  // phrases
+  const big = $("#big");
+  document.querySelectorAll(".ph").forEach(el => el.onclick = () => { const p = t.phrases[el.dataset.i]; big.querySelector(".ja").textContent = p[1]; big.querySelector(".ko").textContent = p[0]; big.classList.add("on"); });
+  big.onclick = () => big.classList.remove("on");
+
+  // weather
+  const s0 = t.days[0].date, s1 = t.days.at(-1).date;
+  Promise.all(t.weatherPlaces.map(pl => fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pl.lat}&longitude=${pl.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&start_date=${s0}&end_date=${s1}`).then(r => r.json())))
+  .then(rs => {
+    $("#wx").innerHTML = rs.map((r, k) => !r.daily ? "" : `<p class="count" style="margin:8px 0 6px">${esc(t.weatherPlaces[k].name)}</p><div class="wx">${r.daily.time.map((d, i) => `<div><span class="t">${d.slice(5).replace("-", "/")}</span><b>${WMO(r.daily.weather_code[i])}</b>${Math.round(r.daily.temperature_2m_min[i])}° / ${Math.round(r.daily.temperature_2m_max[i])}°<br>☂ ${r.daily.precipitation_probability_max[i] ?? "-"}%</div>`).join("")}</div>`).join("")
+      + `<p class="count" style="margin-top:8px">Open-Meteo 예보 · 열 때마다 새로 받아요</p>`;
+    if (!rs.some(r => r.daily)) throw 0;
+  }).catch(() => { $("#wx").innerHTML = `<p class="count">예보를 아직 못 받았어요 (여행 16일 전부터 나와요). 가이드 안내: ${esc(t.weather)}</p>`; });
+}
+
 let LINKS = [], GROUPS = [], filter = store.get("gfilter", "all");
 function linkCard(l){
   const sum = l.summary ? `<div class="sum">${esc(l.summary)}</div>` : `<div class="sum empty">아직 내용을 확인하지 못했어요. 링크를 열어 확인해 주세요.</div>`;
@@ -254,7 +346,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
   $("#foot").textContent = `링크 ${LINKS.length}개`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
