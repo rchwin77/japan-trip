@@ -13,7 +13,8 @@
         "쇼핑",
         "가방"
       ],
-      "day": null
+      "day": null,
+      "group": "쇼핑 · 가방/잡화/선물"
     },
     {
       "key": "ig:DeoWlMzvQ4W",
@@ -28,7 +29,8 @@
         "쇼핑",
         "드럭스토어"
       ],
-      "day": null
+      "day": null,
+      "group": "쇼핑 · 드럭스토어/화장품"
     },
     {
       "key": "ig:DebNDNQhQzE",
@@ -43,7 +45,8 @@
         "필독",
         "면세"
       ],
-      "day": null
+      "day": null,
+      "group": "필독 · 면세/입국/안전"
     },
     {
       "key": "ig:DfWDTydMPJB",
@@ -58,7 +61,8 @@
         "준비물",
         "eSIM"
       ],
-      "day": null
+      "day": null,
+      "group": "준비물 · 꿀팁"
     },
     {
       "key": "ig:De_sDNZT9am",
@@ -73,7 +77,8 @@
         "쇼핑",
         "드럭스토어"
       ],
-      "day": null
+      "day": null,
+      "group": "쇼핑 · 드럭스토어/화장품"
     },
     {
       "key": "ig:DfWSUFTJXj8",
@@ -88,7 +93,8 @@
         "안전",
         "신주쿠"
       ],
-      "day": null
+      "day": null,
+      "group": "필독 · 면세/입국/안전"
     },
     {
       "key": "ig:Dc0oLCHJSLL",
@@ -103,7 +109,8 @@
         "쇼핑",
         "드럭스토어"
       ],
-      "day": null
+      "day": null,
+      "group": "쇼핑 · 드럭스토어/화장품"
     },
     {
       "key": "ig:DeophfdTM_h",
@@ -118,7 +125,8 @@
         "쇼핑",
         "선물"
       ],
-      "day": null
+      "day": null,
+      "group": "쇼핑 · 가방/잡화/선물"
     },
     {
       "key": "ig:De-iOQro8vh",
@@ -133,7 +141,8 @@
         "쇼핑",
         "선물"
       ],
-      "day": null
+      "day": null,
+      "group": "쇼핑 · 가방/잡화/선물"
     },
     {
       "key": "ig:DaIO6ZfpkdA",
@@ -147,7 +156,8 @@
       "tags": [
         "준비물"
       ],
-      "day": null
+      "day": null,
+      "group": "준비물 · 꿀팁"
     },
     {
       "key": "ig:DeMlN2YPB4f",
@@ -163,7 +173,8 @@
         "입국",
         "나리타"
       ],
-      "day": null
+      "day": null,
+      "group": "필독 · 면세/입국/안전"
     },
     {
       "key": "nv:/dmsdud4750/224465926169",
@@ -179,7 +190,8 @@
         "전망대",
         "예약"
       ],
-      "day": null
+      "day": null,
+      "group": "관광지 · 시부야/긴자"
     },
     {
       "key": "gpt:/share/6af12f63-c8b4-83ee-a16e-34be2b747180",
@@ -194,7 +206,8 @@
         "시부야",
         "교통"
       ],
-      "day": null
+      "day": null,
+      "group": "교통 · 이동"
     },
     {
       "key": "gpt:/s/t_6af130432a348191a5f3099c1c09adb8",
@@ -209,7 +222,8 @@
         "시부야",
         "교통"
       ],
-      "day": null
+      "day": null,
+      "group": "교통 · 이동"
     },
     {
       "key": "ig:Dd0zTVJSfRb",
@@ -224,7 +238,8 @@
         "교통",
         "필독"
       ],
-      "day": null
+      "day": null,
+      "group": "교통 · 이동"
     },
     {
       "key": "ig:DdtRSKUB5Gr",
@@ -240,7 +255,8 @@
         "맛집",
         "쇼핑"
       ],
-      "day": null
+      "day": null,
+      "group": "관광지 · 시부야/긴자"
     },
     {
       "key": "ig:De1JQkrT6U1",
@@ -255,7 +271,8 @@
         "편의점",
         "간식"
       ],
-      "day": null
+      "day": null,
+      "group": "편의점 · 간식"
     },
     {
       "key": "ig:Dbcnbg1x3qm",
@@ -270,7 +287,8 @@
         "편의점",
         "간식"
       ],
-      "day": null
+      "day": null,
+      "group": "편의점 · 간식"
     },
     {
       "key": "ig:DfW3y-4Tup1",
@@ -285,7 +303,8 @@
         "필독",
         "면세"
       ],
-      "day": null
+      "day": null,
+      "group": "필독 · 면세/입국/안전"
     },
     {
       "key": "ig:DY8yf9JthcL",
@@ -299,7 +318,18 @@
       "tags": [
         "준비물"
       ],
-      "day": null
+      "day": null,
+      "group": "준비물 · 꿀팁"
     }
+  ],
+  "groups": [
+    "필독 · 면세/입국/안전",
+    "교통 · 이동",
+    "관광지 · 시부야/긴자",
+    "쇼핑 · 드럭스토어/화장품",
+    "쇼핑 · 가방/잡화/선물",
+    "편의점 · 간식",
+    "준비물 · 꿀팁",
+    "미분류"
   ]
 }

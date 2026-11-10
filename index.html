@@ -55,6 +55,7 @@ section{display:none}section.on{display:block}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
 .chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ghead{font-size:15px;margin:18px 2px 8px;display:flex;align-items:center;gap:6px}.ghead span{font-size:12px;color:var(--sub);font-weight:600}
 .link .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;color:#fff}
 .b-instagram{background:#d62976}.b-youtube{background:#e00}.b-blog{background:#03a94d}.b-chatgpt{background:#10a37f}.b-web{background:#666}
@@ -148,25 +149,36 @@ function renderTrip(t){
   draw();
 }
 
-let LINKS = [], filter = store.get("filter", "all");
+let LINKS = [], GROUPS = [], filter = store.get("gfilter", "all");
+function linkCard(l){
+  const sum = l.summary ? `<div class="sum">${esc(l.summary)}</div>` : `<div class="sum empty">아직 내용을 확인하지 못했어요. 링크를 열어 확인해 주세요.</div>`;
+  const preview = l.type === "instagram" ? `<button class="btn" data-embed="${esc(l.url)}">여기서 미리보기</button>` : "";
+  return `<div class="card link">
+    <div class="top"><span class="badge b-${esc(l.type)}">${esc(TYPE[l.type] || l.type)}</span><span class="meta">${esc(l.from)} · ${esc(l.sent)}</span></div>
+    ${l.title ? `<div class="ttl">${esc(l.title)}</div>` : ""}
+    ${sum}
+    <div>${(l.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join("")}</div>
+    <div class="btns">${preview}<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">열기</a></div>
+    <div class="embed"></div></div>`;
+}
+function chipName(g, all){
+  const [a, b] = g.split(" · ");
+  return b && all.filter(x => x.split(" · ")[0] === a).length > 1 ? b.split("/")[0] : a;
+}
 function renderLinks(){
-  const types = ["all", ...new Set(LINKS.map(l => l.type))];
-  const shown = LINKS.filter(l => filter === "all" || l.type === filter).slice().reverse();
-  let h = `<div class="chips">` + types.map(t => `<button data-f="${t}" class="${t === filter ? "on" : ""}">${t === "all" ? "전체" : TYPE[t] || t} ${t === "all" ? LINKS.length : LINKS.filter(l => l.type === t).length}</button>`).join("") + `</div>`;
-  h += `<p class="count">가족이 보낸 링크 · 중복 제거됨 · 최신순<br>인스타 요약은 게시물 글(캡션) 기준이에요. 영상 속 내용은 열어서 확인하세요.</p>`;
-  h += shown.map(l => {
-    const sum = l.summary ? `<div class="sum">${esc(l.summary)}</div>` : `<div class="sum empty">아직 내용을 확인하지 못했어요. 링크를 열어 확인해 주세요.</div>`;
-    const preview = l.type === "instagram" ? `<button class="btn" data-embed="${esc(l.url)}">여기서 미리보기</button>` : "";
-    return `<div class="card link">
-      <div class="top"><span class="badge b-${esc(l.type)}">${esc(TYPE[l.type] || l.type)}</span><span class="meta">${esc(l.from)} · ${esc(l.sent)}</span></div>
-      ${l.title ? `<div class="ttl">${esc(l.title)}</div>` : ""}
-      ${sum}
-      <div>${(l.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join("")}</div>
-      <div class="btns">${preview}<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">열기</a></div>
-      <div class="embed"></div></div>`;
-  }).join("");
+  const groupOf = l => l.group || "미분류";
+  const used = GROUPS.filter(g => LINKS.some(l => groupOf(l) === g));
+  LINKS.forEach(l => { if (!used.includes(groupOf(l))) used.push(groupOf(l)); });
+  if (filter !== "all" && !used.includes(filter)) filter = "all";
+  let h = `<div class="chips"><button data-f="all" class="${filter === "all" ? "on" : ""}">전체 ${LINKS.length}</button>` +
+    used.map(g => `<button data-f="${esc(g)}" class="${g === filter ? "on" : ""}">${esc(chipName(g, used))} ${LINKS.filter(l => groupOf(l) === g).length}</button>`).join("") + `</div>`;
+  h += `<p class="count">가족이 보낸 링크 · 중복 제거됨 · 내용별로 묶음<br>인스타 요약은 게시물 글(캡션) 기준이에요. 영상 속 내용은 열어서 확인하세요.</p>`;
+  for (const g of (filter === "all" ? used : [filter])) {
+    const items = LINKS.filter(l => groupOf(l) === g).slice().reverse();
+    h += `<h3 class="ghead">${esc(g)} <span>${items.length}</span></h3>` + items.map(linkCard).join("");
+  }
   $("#links").innerHTML = h;
-  $("#links").querySelectorAll(".chips button").forEach(b => b.onclick = () => { filter = b.dataset.f; store.set("filter", filter); renderLinks(); });
+  $("#links").querySelectorAll(".chips button").forEach(b => b.onclick = () => { filter = b.dataset.f; store.set("gfilter", filter); renderLinks(); });
   $("#links").querySelectorAll("[data-embed]").forEach(b => b.onclick = () => {
     const slot = b.closest(".card").querySelector(".embed");
     slot.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${b.dataset.embed}" data-instgrm-version="14" style="width:100%;margin:0"></blockquote>`;
@@ -180,7 +192,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); LINKS = links.links; renderLinks();
+  renderTrip(trip); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
   $("#foot").textContent = `링크 ${LINKS.length}개`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>

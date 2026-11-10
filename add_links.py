@@ -56,7 +56,7 @@ def main(src):
             title_hint = body.replace(url, "").strip(" -:")
             item = {"key": key, "type": typ, "url": clean, "from": who,
                     "sent": f"{date or ''} {time}".strip(), "title": title_hint,
-                    "summary": "", "status": "unread", "tags": [], "day": None}
+                    "summary": "", "status": "unread", "tags": [], "day": None, "group": "미분류"}
             data["links"].append(item)
             seen[key] = item
             added += 1
