@@ -134,7 +134,7 @@ function renderTrip(t){
     ${d.meals ? `<div class="meals">🍽 ${esc(d.meals)}</div>` : ""}
   </div>`).join("");
   h += t.notes.map(n => `<div class="note">${esc(n)}</div>`).join("");
-  h += `<div class="btns"><a class="btn" href="${esc(t.productUrl)}" target="_blank" rel="noopener">여행사 상품 페이지</a><a class="btn" href="${esc(t.scheduleUrl)}" target="_blank" rel="noopener">일정표 원본</a></div>`;
+  h += `<div class="btns"><a class="btn" href="${esc(t.productUrl)}" target="_blank" rel="noopener">여행사 일정표 원본 보기</a></div>`;
   $("#plan").innerHTML = h;
 
   const done = store.get("pack", {});
