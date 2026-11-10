@@ -162,13 +162,29 @@ const store = {
 };
 const TYPE = {instagram:"인스타", youtube:"유튜브", blog:"블로그", chatgpt:"ChatGPT", web:"웹"};
 
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+const TABS = [...document.querySelectorAll("nav button")].map(b => b.dataset.tab);
+function showTab(tab){
+  if (!TABS.includes(tab)) tab = "plan";
   document.querySelectorAll("nav button,section").forEach(x => x.classList.remove("on"));
-  b.classList.add("on"); $("#" + b.dataset.tab).classList.add("on");
-  store.set("tab", b.dataset.tab); scrollTo(0, 0);
+  document.querySelector(`nav button[data-tab="${tab}"]`).classList.add("on"); $("#" + tab).classList.add("on");
+  store.set("tab", tab); scrollTo(0, 0);
+}
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  if (location.hash.slice(1) === b.dataset.tab) return;
+  history.pushState({tab: b.dataset.tab}, "", "#" + b.dataset.tab);
+  showTab(b.dataset.tab);
 });
-const savedTab = store.get("tab", "plan");
-document.querySelector(`nav button[data-tab="${savedTab}"]`)?.click();
+// 뒤로가기: 큰 글씨 카드가 열려 있으면 닫고, 아니면 이전 탭으로
+addEventListener("popstate", () => {
+  const big = document.getElementById("big");
+  if (big && big.classList.contains("on")) { big.classList.remove("on"); return; }
+  showTab(location.hash.slice(1) || "plan");
+});
+{
+  const start = location.hash.slice(1) || store.get("tab", "plan");
+  history.replaceState({tab: start}, "", "#" + (TABS.includes(start) ? start : "plan"));
+  showTab(start);
+}
 
 function todayStr(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 
@@ -290,8 +306,8 @@ function renderTools(t){
 
   // phrases
   const big = $("#big");
-  document.querySelectorAll(".ph").forEach(el => el.onclick = () => { const p = t.phrases[el.dataset.i]; big.querySelector(".ja").textContent = p[1]; big.querySelector(".ko").textContent = p[0]; big.classList.add("on"); });
-  big.onclick = () => big.classList.remove("on");
+  document.querySelectorAll(".ph").forEach(el => el.onclick = () => { const p = t.phrases[el.dataset.i]; big.querySelector(".ja").textContent = p[1]; big.querySelector(".ko").textContent = p[0]; big.classList.add("on"); history.pushState({big: 1}, "", location.hash); });
+  big.onclick = () => history.back();
 
   // weather
   const s0 = t.days[0].date, s1 = t.days.at(-1).date;
