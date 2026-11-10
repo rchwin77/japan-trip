@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#c8102e">
+<meta name="theme-color" content="#1b2a4a">
 <meta name="robots" content="noindex, nofollow">
-<title>도쿄 가족여행</title>
+<title>류씨가족 일본여행</title>
 <style>
 :root{
   --bg:#f6f4f1;--card:#fff;--ink:#1d1b19;--sub:#6b665f;--line:#e6e1da;
@@ -21,10 +21,14 @@ html,body{margin:0;background:var(--bg);color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
   -webkit-text-size-adjust:100%;line-height:1.5}
 a{color:var(--accent)}
-header{background:var(--accent);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 16px 18px}
-header h1{margin:0;font-size:22px;letter-spacing:-.3px}
-header p{margin:4px 0 0;font-size:13px;opacity:.9}
-#dday{display:inline-block;margin-top:10px;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:99px;font-size:13px;font-weight:600}
+header{position:relative;overflow:hidden;color:#fff;padding:calc(22px + env(safe-area-inset-top)) 18px 0;
+  background:linear-gradient(180deg,#1b2a4a 0%,#7a3b5e 55%,#e2725b 100%);min-height:230px}
+header .txt{position:relative;z-index:2}
+header .kicker{font-size:12px;letter-spacing:3px;opacity:.85;font-weight:700}
+header h1{margin:4px 0 0;font-size:30px;letter-spacing:-.5px;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+header p{margin:6px 0 0;font-size:13px;opacity:.92}
+#dday{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);padding:5px 12px;border-radius:99px;font-size:14px;font-weight:800}
+header svg{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:auto;z-index:1;display:block}
 nav{position:sticky;top:0;z-index:5;display:flex;background:var(--card);border-bottom:1px solid var(--line)}
 nav button{flex:1;border:0;background:none;padding:13px 0;font-size:15px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
 nav button.on{color:var(--accent);border-color:var(--accent)}
@@ -77,9 +81,25 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
 </head>
 <body>
 <header>
-  <h1 id="title">도쿄 가족여행</h1>
-  <p id="subtitle"></p>
-  <div id="dday"></div>
+  <div class="txt">
+    <div class="kicker">TOKYO · HAKONE 2026</div>
+    <h1 id="title">류씨가족 일본여행</h1>
+    <p id="subtitle"></p>
+    <div id="dday"></div>
+  </div>
+  <svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <circle cx="300" cy="52" r="26" fill="#ffd27a" opacity=".95"/>
+    <path d="M0 120 L120 34 Q132 26 144 34 L270 120 Z" fill="#3d4f7c"/>
+    <path d="M108 43 L120 34 Q132 26 144 34 L156 43 L146 48 L138 42 L130 49 L121 42 L113 48 Z" fill="#fff"/>
+    <path d="M150 120 L250 70 L400 120 Z" fill="#2c3a5e" opacity=".9"/>
+    <g fill="#c8102e">
+      <rect x="318" y="66" width="62" height="6" rx="2"/>
+      <rect x="322" y="76" width="54" height="4"/>
+      <rect x="328" y="72" width="5" height="48"/>
+      <rect x="365" y="72" width="5" height="48"/>
+    </g>
+    <path d="M0 120 L0 108 Q60 98 120 106 T240 104 T400 106 L400 120 Z" fill="var(--bg)"/>
+  </svg>
 </header>
 <nav>
   <button data-tab="plan" class="on">일정</button>
