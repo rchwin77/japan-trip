@@ -30,7 +30,7 @@ header p{margin:6px 0 0;font-size:13px;opacity:.92}
 #dday{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);padding:5px 12px;border-radius:99px;font-size:14px;font-weight:800}
 header svg{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:auto;z-index:1;display:block}
 nav{position:sticky;top:0;z-index:5;display:flex;background:var(--card);border-bottom:1px solid var(--line)}
-nav button{flex:1;border:0;background:none;padding:13px 0;font-size:13.5px;white-space:nowrap;letter-spacing:-.3px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
+nav button{flex:1;border:0;background:none;padding:13px 0;font-size:13px;white-space:nowrap;letter-spacing:-.4px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
 nav button.on{color:var(--accent);border-color:var(--accent)}
 main{max-width:640px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
 section{display:none}section.on{display:block}
@@ -89,6 +89,7 @@ section{display:none}section.on{display:block}
 #big.on{display:flex}
 #big .ja{font-size:40px;font-weight:800;line-height:1.3}
 #big .ko{margin-top:16px;color:var(--sub);font-size:16px}
+.tipl{margin:0;padding-left:18px;font-size:14px}.tipl li{margin:4px 0}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
@@ -141,6 +142,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <button data-tab="shop">쇼핑</button>
   <button data-tab="links">링크</button>
   <button data-tab="pack">준비물</button>
+  <button data-tab="parking">주차</button>
   <button data-tab="tools">도구</button>
 </nav>
 <main>
@@ -149,6 +151,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <section id="shop"></section>
   <section id="links"></section>
   <section id="pack"></section>
+  <section id="parking"></section>
   <section id="tools"></section>
   <footer id="foot"></footer>
 </main>
@@ -206,6 +209,7 @@ function renderTrip(t){
     <div class="row"><div class="k">가이드</div><div class="v">${esc(t.guide.name)}${t.guide.phone ? ` · <a href="tel:${esc(t.guide.phone.replace(/-/g,""))}">${esc(t.guide.phone)}</a>` : ""}<br><small style="color:var(--sub)">${esc(t.guide.note)}</small></div></div>
     <div class="row"><div class="k">인원</div><div class="v">${esc(t.people)}</div></div>
     <div class="row"><div class="k">날씨</div><div class="v">${esc(t.weather)}</div></div></div>`;
+  if (t.wifi) h += infoCard(t.wifi);
   h += t.days.map(d => `<div class="card day ${d.date === today ? "today" : ""}">
     <div class="head"><h2>${d.day}일차 · ${esc(d.title)}</h2><span>${esc(d.date.slice(5).replace("-","/"))} (${esc(d.dow)})</span></div>
     ${d.items.map(i => `<div class="item ${i.pending ? "pending" : ""} ${i.note ? "sub" : ""}"><div class="t">${esc(i.time || "")}</div><div>${i.link ? `<a href="${esc(i.link)}">${esc(i.text)}</a>` : esc(i.text)}</div></div>`).join("")}
@@ -224,6 +228,27 @@ function renderTrip(t){
     box.querySelectorAll("input").forEach(el => el.onchange = () => { done[t.checklist[el.dataset.i]] = el.checked; store.set("pack", done); draw(); });
   };
   draw();
+}
+
+function infoCard(o){
+  return `<div class="card"><h2>${esc(o.title)}</h2>${o.rows.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}
+    ${o.tip ? `<div class="note" style="margin:10px 0 0">${esc(o.tip)}</div>` : ""}
+    ${o.links ? `<div class="btns">${o.links.map(l => `<a class="btn" href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])}</a>`).join("")}</div>` : ""}
+    ${o.source ? `<p class="count" style="margin-top:8px">${esc(o.source)}</p>` : ""}</div>`;
+}
+function renderParking(pk){
+  const spot = store.get("parkSpot", "");
+  $("#parking").innerHTML = `<div class="note">${esc(pk.intro)}</div>` +
+    pk.options.map(o => `<div class="card"><h2>${esc(o.name)}</h2>
+      <div class="row"><div class="k">요금</div><div class="v">${esc(o.fee)}</div></div>
+      <div class="row"><div class="k">예상</div><div class="v"><b>${esc(o.est)}</b></div></div>
+      <div class="row"><div class="k">참고</div><div class="v">${esc(o.note)}</div></div></div>`).join("") +
+    `<div class="card"><h2>내 차 위치 메모</h2><div class="fx"><input id="parkSpot" placeholder="예: 장기 P1 B구역 23번" value="${esc(spot)}" maxlength="80"></div><p class="count" style="margin-top:6px">입력하면 이 폰에 바로 저장돼요</p></div>` +
+    `<div class="card"><h2>알아두기</h2><ul class="tipl">${pk.tips.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+      <div class="btns"><a class="btn primary" href="https://www.google.com/maps/search/${encodeURIComponent("인천공항 제1터미널 장기주차장")}" target="_blank" rel="noopener">장기주차장 길찾기</a><a class="btn" href="https://www.airport.kr" target="_blank" rel="noopener">인천공항 홈페이지</a></div></div>` +
+    `<div class="card link"><div class="top"><span class="badge b-blog">블로그</span><span class="meta">가족이 보낸 링크</span></div><div class="ttl">${esc(pk.blog.title)}</div><div class="sum empty">${esc(pk.blog.note)}</div><div class="btns"><a class="btn primary" href="${esc(pk.blog.url)}" target="_blank" rel="noopener">열기</a></div></div>` +
+    `<p class="count">${esc(pk.sources)}</p>`;
+  $("#parkSpot").oninput = e => store.set("parkSpot", e.target.value);
 }
 
 function renderFood(f){
@@ -272,6 +297,7 @@ function renderTools(t){
     <div class="fx" style="margin-top:8px"><input id="exAmt" type="number" inputmode="numeric" placeholder="엔 금액"><button class="btn primary" id="exAdd" style="flex:none;padding:10px 16px">추가</button></div>
     <div id="exList"></div><p class="count">이 폰에만 저장돼요. 가족 공유는 안 돼요.</p></div>
   <div class="card em"><h2>비상 연락처 (누르면 전화)</h2>${em}</div>
+  ${t.insurance ? infoCard(t.insurance) : ""}
   <div class="card"><h2>일본어 카드 (누르면 크게 보여요)</h2>${ph}</div>`;
 
   // exchange
@@ -362,7 +388,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
   $("#foot").textContent = `링크 ${LINKS.length}개`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
