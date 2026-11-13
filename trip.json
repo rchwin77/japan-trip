@@ -326,6 +326,20 @@
           "미쓰코시 지하 '누아 드 뵈르' 휘낭시에"
         ]
       }
+    ],
+    "sites": [
+      [
+        "Visit Japan Web (출국 면세 확인)",
+        "https://services.digital.go.jp/ko/visit-japan-web/"
+      ],
+      [
+        "바로 등록·로그인",
+        "https://vjw-lp.digital.go.jp"
+      ],
+      [
+        "일본 관광청 면세 안내",
+        "https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00028.html"
+      ]
     ]
   },
   "emergency": [

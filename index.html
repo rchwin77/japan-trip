@@ -147,9 +147,9 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
 <nav>
   <button data-tab="plan" class="on">일정</button>
   <button data-tab="entry">입국</button>
+  <button data-tab="taxfree">면세</button>
   <button data-tab="food">맛집</button>
   <button data-tab="shop">쇼핑</button>
-  <button data-tab="taxfree">면세</button>
   <button data-tab="links">링크</button>
   <button data-tab="pack">준비물</button>
   <button data-tab="parking">주차</button>
@@ -393,7 +393,9 @@ function chipName(g, all){
 }
 function renderTaxfree(sh){
   const items = LINKS.filter(l => l.group === "면세").slice().reverse();
-  $("#taxfree").innerHTML = `<div class="card steps-tf"><h2>바뀐 면세 환급 방법</h2>${sh.taxfree.map((t, i) => `<p${i === sh.taxfree.length - 1 ? ' style="color:var(--accent);font-weight:700"' : ""}>${esc(t)}</p>`).join("")}<p class="count" style="margin-top:8px">${esc(sh.taxfreeNote)}</p></div>
+  $("#taxfree").innerHTML = (sh.sites ? `<div class="card"><h2>면세 공식 사이트</h2>${sh.sites.map(x => `<div class="row"><div class="v"><b style="font-size:14px">${esc(x[0])}</b><br><a href="${esc(x[1])}" target="_blank" rel="noopener" style="word-break:break-all;font-size:14px">${esc(x[1].replace("https://", ""))}</a></div></div>`).join("")}
+      <div class="btns"><a class="btn primary" href="${esc(sh.sites[0][1])}" target="_blank" rel="noopener">Visit Japan Web 열기</a><a class="btn" href="${esc(sh.sites[2][1])}" target="_blank" rel="noopener">관광청 안내</a></div>
+      <p class="count" style="margin-top:8px">주소 끝이 <b>.go.jp</b> 인지 확인하세요. 입국 때 쓴 Visit Japan Web 계정 그대로 써요.</p></div>` : "") + `<div class="card steps-tf"><h2>바뀐 면세 환급 방법</h2>${sh.taxfree.map((t, i) => `<p${i === sh.taxfree.length - 1 ? ' style="color:var(--accent);font-weight:700"' : ""}>${esc(t)}</p>`).join("")}<p class="count" style="margin-top:8px">${esc(sh.taxfreeNote)}</p></div>
     <h3 class="ghead">면세 참고 링크 <span>${items.length}</span></h3>` + items.map(linkCard).join("");
   bindEmbeds($("#taxfree"));
 }
