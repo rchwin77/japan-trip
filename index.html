@@ -410,8 +410,12 @@ function bindEmbeds(root){
 function renderEntry(v){
   const nara = (window.LINKS_ALL || []).filter(l => l.key === "ig:DeMlN2YPB4f");
   const li = a => `<ul class="tipl">${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
-  $("#entry").innerHTML = `<div class="note">${esc(v.intro)}</div>
-    <div class="btns" style="margin:0 0 12px"><a class="btn primary" href="${esc(v.url)}" target="_blank" rel="noopener">공식 안내 (한국어)</a>${v.loginUrl ? `<a class="btn" href="${esc(v.loginUrl)}" target="_blank" rel="noopener">바로 등록·로그인</a>` : ""}</div>
+  $("#entry").innerHTML = `<div class="card"><h2>Visit Japan Web 공식 사이트</h2>
+      <div class="row"><div class="k">안내</div><div class="v"><a href="${esc(v.url)}" target="_blank" rel="noopener" style="word-break:break-all">${esc(v.url.replace("https://", ""))}</a></div></div>
+      ${v.loginUrl ? `<div class="row"><div class="k">등록</div><div class="v"><a href="${esc(v.loginUrl)}" target="_blank" rel="noopener">${esc(v.loginUrl.replace("https://", ""))}</a></div></div>` : ""}
+      <div class="btns"><a class="btn primary" href="${esc(v.url)}" target="_blank" rel="noopener">공식 안내 (한국어)</a>${v.loginUrl ? `<a class="btn" href="${esc(v.loginUrl)}" target="_blank" rel="noopener">바로 등록·로그인</a>` : ""}</div>
+      <p class="count" style="margin-top:8px">주소 끝이 <b>.go.jp</b> 인지 확인하세요. 무료예요.</p></div>
+    <div class="note">${esc(v.intro)}</div>
     <div class="card"><h2>우리 가족이 입력할 내용</h2>${v.fill.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}
       <p class="count" style="margin-top:6px">숙소 주소를 길게 누르면 복사할 수 있어요</p></div>
     <div class="card"><h2>준비물</h2>${li(v.prep)}</div>
