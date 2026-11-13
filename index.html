@@ -29,8 +29,8 @@ header h1{margin:4px 0 0;font-size:30px;letter-spacing:-.5px;font-weight:800;tex
 header p{margin:6px 0 0;font-size:13px;opacity:.92}
 #dday{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);padding:5px 12px;border-radius:99px;font-size:14px;font-weight:800}
 header svg{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:auto;z-index:1;display:block}
-nav{position:sticky;top:0;z-index:5;display:flex;background:var(--card);border-bottom:1px solid var(--line)}
-nav button{flex:1;border:0;background:none;padding:13px 0;font-size:13px;white-space:nowrap;letter-spacing:-.4px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
+nav{position:sticky;top:0;z-index:5;display:flex;overflow-x:auto;scrollbar-width:none;background:var(--card);border-bottom:1px solid var(--line)}
+nav button{flex:1 0 auto;border:0;background:none;padding:13px 7px;font-size:13px;white-space:nowrap;letter-spacing:-.4px;color:var(--sub);font-weight:600;border-bottom:3px solid transparent}
 nav button.on{color:var(--accent);border-color:var(--accent)}
 main{max-width:640px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
 section{display:none}section.on{display:block}
@@ -148,6 +148,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <button data-tab="plan" class="on">일정</button>
   <button data-tab="food">맛집</button>
   <button data-tab="shop">쇼핑</button>
+  <button data-tab="taxfree">면세</button>
   <button data-tab="links">링크</button>
   <button data-tab="pack">준비물</button>
   <button data-tab="parking">주차</button>
@@ -157,6 +158,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <section id="plan" class="on"></section>
   <section id="food"></section>
   <section id="shop"></section>
+  <section id="taxfree"></section>
   <section id="links"></section>
   <section id="pack"></section>
   <section id="parking"></section>
@@ -291,7 +293,7 @@ function renderShop(sh){
   const draw = () => {
     const all = sh.groups.flatMap(g => g.items).concat(mine);
     const n = all.filter(i => done[i]).length;
-    let h = `<div class="card steps-tf"><h2>바뀐 면세 환급 방법</h2>${sh.taxfree.map((t, i) => `<p${i === sh.taxfree.length - 1 ? ' style="color:var(--accent);font-weight:700"' : ""}>${esc(t)}</p>`).join("")}<p class="count" style="margin-top:8px">${esc(sh.taxfreeNote)}</p></div>`;
+    let h = `<a class="note" href="#taxfree" style="display:block;text-decoration:none">면세 받는 방법은 <b>면세</b> 탭에 정리했어요 →</a>`;
     h += `<p class="count">살 것 ${n} / ${all.length} 체크 · 이 폰에만 저장돼요</p>`;
     h += sh.groups.map(g => `<div class="card check"><h2>${esc(g.name)}</h2>${g.items.map(i => `<label><input type="checkbox" data-k="${esc(i)}" ${done[i] ? "checked" : ""}><span>${esc(i)}</span></label>`).join("")}</div>`).join("");
     h += `<div class="card check"><h2>내가 추가한 것</h2>${mine.map((i, x) => `<label><input type="checkbox" data-k="${esc(i)}" ${done[i] ? "checked" : ""}><span>${esc(i)}</span><button class="del" data-x="${x}" aria-label="삭제">×</button></label>`).join("") || '<p class="count">아직 없어요</p>'}
@@ -387,8 +389,25 @@ function chipName(g, all){
   const [a, b] = g.split(" · ");
   return b && all.filter(x => x.split(" · ")[0] === a).length > 1 ? b.split("/")[0] : a;
 }
+function renderTaxfree(sh){
+  const items = LINKS.filter(l => l.group === "면세").slice().reverse();
+  $("#taxfree").innerHTML = `<div class="card steps-tf"><h2>바뀐 면세 환급 방법</h2>${sh.taxfree.map((t, i) => `<p${i === sh.taxfree.length - 1 ? ' style="color:var(--accent);font-weight:700"' : ""}>${esc(t)}</p>`).join("")}<p class="count" style="margin-top:8px">${esc(sh.taxfreeNote)}</p></div>
+    <h3 class="ghead">면세 참고 링크 <span>${items.length}</span></h3>` + items.map(linkCard).join("");
+  bindEmbeds($("#taxfree"));
+}
+function bindEmbeds(root){
+  root.querySelectorAll("[data-embed]").forEach(b => b.onclick = () => {
+    const slot = b.closest(".card").querySelector(".embed");
+    slot.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${b.dataset.embed}" data-instgrm-version="14" style="width:100%;margin:0"></blockquote>`;
+    b.remove();
+    if (window.instgrm) instgrm.Embeds.process();
+    else { const s = document.createElement("script"); s.src = "https://www.instagram.com/embed.js"; s.async = true; document.body.appendChild(s); }
+  });
+}
+
 function renderLinks(){
   const groupOf = l => l.group || "미분류";
+  const LINKS = window.LINKS_ALL.filter(l => l.group !== "면세");
   const used = GROUPS.filter(g => LINKS.some(l => groupOf(l) === g));
   LINKS.forEach(l => { if (!used.includes(groupOf(l))) used.push(groupOf(l)); });
   if (filter !== "all" && !used.includes(filter)) filter = "all";
@@ -414,8 +433,8 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; GROUPS = links.groups || []; renderLinks();
-  $("#foot").textContent = `링크 ${LINKS.length}개`;
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping);
+  $("#foot").textContent = `링크 ${LINKS.length}개 (면세 ${LINKS.filter(l => l.group === "면세").length}개 포함)`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
 </body>
