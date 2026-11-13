@@ -112,6 +112,12 @@ section{display:none}section.on{display:block}
 #qrview img{max-width:100%;max-height:78vh;object-fit:contain}
 #qrview .who{font-size:22px;font-weight:800;color:#111}
 #qrview .hint{font-size:13px;color:#666}
+details.fold summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary h2{margin:0}
+details.fold summary:after{content:"펼치기 ▾";font-size:13px;color:var(--sub)}
+details.fold[open] summary:after{content:"접기 ▴"}
+details.fold[open] summary{margin-bottom:8px}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
@@ -493,8 +499,8 @@ function renderEntry(v){
     <div class="note">${esc(v.intro)}</div>
     <div class="card"><h2>우리 가족이 입력할 내용</h2>${v.fill.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}
       <p class="count" style="margin-top:6px">숙소 주소를 길게 누르면 복사할 수 있어요</p></div>
-    <div class="card"><h2>준비물</h2>${li(v.prep)}</div>
-    <div class="card"><h2>등록 순서</h2>${v.steps.map((s, i) => `<div class="row"><div class="k"><b>${i + 1}</b></div><div class="v"><b>${esc(s[0])}</b><br><span style="font-size:14px;color:var(--sub)">${esc(s[1])}</span></div></div>`).join("")}</div>
+    <details class="card fold"><summary><h2>준비물</h2></summary>${li(v.prep)}</details>
+    <details class="card fold"><summary><h2>등록 순서</h2></summary>${v.steps.map((s, i) => `<div class="row"><div class="k"><b>${i + 1}</b></div><div class="v"><b>${esc(s[0])}</b><br><span style="font-size:14px;color:var(--sub)">${esc(s[1])}</span></div></div>`).join("")}</details>
     <div class="card"><h2>나리타 공항 도착 후 실제 사용 방법</h2>${v.airport.map((s, i) => `<div class="row"><div class="k"><b>${i + 1}</b></div><div class="v">${esc(s)}</div></div>`).join("")}</div>
     <div class="card"><h2>팁</h2>${li(v.tips)}</div>
     ${nara.length ? `<h3 class="ghead">가족이 보낸 입국 관련 링크</h3>` + nara.map(linkCard).join("") : ""}
