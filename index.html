@@ -146,6 +146,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
 </header>
 <nav>
   <button data-tab="plan" class="on">일정</button>
+  <button data-tab="entry">입국</button>
   <button data-tab="food">맛집</button>
   <button data-tab="shop">쇼핑</button>
   <button data-tab="taxfree">면세</button>
@@ -156,6 +157,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
 </nav>
 <main>
   <section id="plan" class="on"></section>
+  <section id="entry"></section>
   <section id="food"></section>
   <section id="shop"></section>
   <section id="taxfree"></section>
@@ -405,6 +407,22 @@ function bindEmbeds(root){
   });
 }
 
+function renderEntry(v){
+  const nara = (window.LINKS_ALL || []).filter(l => l.key === "ig:DeMlN2YPB4f");
+  const li = a => `<ul class="tipl">${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  $("#entry").innerHTML = `<div class="note">${esc(v.intro)}</div>
+    <a class="btn primary" style="display:block;margin-bottom:12px" href="${esc(v.url)}" target="_blank" rel="noopener">Visit Japan Web 공식 사이트 열기</a>
+    <div class="card"><h2>우리 가족이 입력할 내용</h2>${v.fill.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}
+      <p class="count" style="margin-top:6px">숙소 주소를 길게 누르면 복사할 수 있어요</p></div>
+    <div class="card"><h2>준비물</h2>${li(v.prep)}</div>
+    <div class="card"><h2>등록 순서</h2>${v.steps.map((s, i) => `<div class="row"><div class="k"><b>${i + 1}</b></div><div class="v"><b>${esc(s[0])}</b><br><span style="font-size:14px;color:var(--sub)">${esc(s[1])}</span></div></div>`).join("")}</div>
+    <div class="card"><h2>나리타 공항에서</h2>${v.airport.map((s, i) => `<div class="row"><div class="k"><b>${i + 1}</b></div><div class="v">${esc(s)}</div></div>`).join("")}</div>
+    <div class="card"><h2>팁</h2>${li(v.tips)}</div>
+    ${nara.length ? `<h3 class="ghead">가족이 보낸 입국 관련 링크</h3>` + nara.map(linkCard).join("") : ""}
+    <p class="count">${esc(v.note)}</p>`;
+  bindEmbeds($("#entry"));
+}
+
 function renderLinks(){
   const groupOf = l => l.group || "미분류";
   const LINKS = window.LINKS_ALL.filter(l => l.group !== "면세");
@@ -433,7 +451,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping);
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
   $("#foot").textContent = `링크 ${LINKS.length}개 (면세 ${LINKS.filter(l => l.group === "면세").length}개 포함)`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
