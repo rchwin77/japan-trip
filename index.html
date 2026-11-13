@@ -98,6 +98,20 @@ section{display:none}section.on{display:block}
 .hh span{display:block;font-size:12px;color:var(--sub)}
 .hh b{font-size:20px}
 .wx small{font-size:11px;color:var(--sub)}
+.qrs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qrslot{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.qrslot input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px;font-size:14px;text-align:center;background:var(--card);color:var(--ink)}
+.qrslot .thumb{height:70px;border-radius:8px;background:var(--card);display:grid;place-items:center;font-size:12px;color:var(--sub);overflow:hidden}
+.qrslot .thumb img{max-width:100%;max-height:70px}
+.qrslot button,.qrslot label.pick{border:0;border-radius:8px;padding:8px 4px;font-size:13px;font-weight:700;cursor:pointer}
+.qrslot .show{background:var(--accent);color:#fff}
+.qrslot label.pick{background:var(--card);border:1px solid var(--line);color:var(--ink);display:block}
+.qrslot .rm{background:none;color:var(--sub);font-weight:500;padding:2px}
+#qrview{position:fixed;inset:0;z-index:30;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px}
+#qrview.on{display:flex}
+#qrview img{max-width:100%;max-height:78vh;object-fit:contain}
+#qrview .who{font-size:22px;font-weight:800;color:#111}
+#qrview .hint{font-size:13px;color:#666}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
@@ -167,6 +181,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
   <section id="tools"></section>
   <footer id="foot"></footer>
 </main>
+<div id="qrview" role="dialog"><div class="who"></div><img alt="QR"><div class="hint">화면 밝기를 최대로 올려 주세요 · 화면을 누르면 닫혀요</div></div>
 <div id="big" role="dialog"><div class="ja"></div><div class="ko"></div><p class="count" style="margin-top:24px">화면을 누르면 닫혀요</p></div>
 <script>
 const $ = s => document.querySelector(s);
@@ -193,6 +208,8 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
 addEventListener("popstate", () => {
   const big = document.getElementById("big");
   if (big && big.classList.contains("on")) { big.classList.remove("on"); return; }
+  const qv = document.getElementById("qrview");
+  if (qv && qv.classList.contains("on")) { closeQR(); return; }
   showTab(location.hash.slice(1) || "plan");
 });
 {
@@ -409,10 +426,66 @@ function bindEmbeds(root){
   });
 }
 
+// ---- 내 QR (이 기기 IndexedDB에만 저장, 서버 전송 없음) ----
+const QRDB = { db: null,
+  open(){ return this.db ? Promise.resolve(this.db) : new Promise((ok, no) => {
+    try { const r = indexedDB.open("trip-qr", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("qr");
+      r.onsuccess = () => ok(this.db = r.result); r.onerror = () => no(r.error);
+    } catch (e) { no(e); } }); },
+  async get(k){ const db = await this.open(); return new Promise(ok => { const q = db.transaction("qr").objectStore("qr").get(k); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); },
+  async put(k, v){ const db = await this.open(); return new Promise((ok, no) => { const t = db.transaction("qr", "readwrite"); t.objectStore("qr").put(v, k); t.oncomplete = ok; t.onerror = () => no(t.error); }); },
+  async del(k){ const db = await this.open(); return new Promise(ok => { const t = db.transaction("qr", "readwrite"); t.objectStore("qr").delete(k); t.oncomplete = ok; t.onerror = ok; }); }
+};
+const QR_SLOTS = 3, QR_DEFAULT = ["나", "와이프", "아들"];
+const qrName = i => { const n = store.get("qrNames", [])[i]; return n == null ? QR_DEFAULT[i] : n; };
+let qrUrls = [], wakeLock = null;
+async function drawQRs(){
+  const box = $("#qrs"); if (!box) return;
+  qrUrls.forEach(u => u && URL.revokeObjectURL(u)); qrUrls = [];
+  const names = store.get("qrNames", []);
+  let html = "";
+  for (let i = 0; i < QR_SLOTS; i++) {
+    let rec = null; try { rec = await QRDB.get("slot" + i); } catch (e) {}
+    const url = rec && rec.blob ? URL.createObjectURL(rec.blob) : null; qrUrls[i] = url;
+    html += `<div class="qrslot">
+      <input type="text" data-n="${i}" value="${esc(qrName(i))}" placeholder="이름 ${i + 1}" maxlength="10">
+      <div class="thumb">${url ? `<img src="${url}" alt="">` : "QR 없음"}</div>
+      ${url ? `<button class="show" data-s="${i}">QR 보기</button>` : ""}
+      <label class="pick">${url ? "사진 바꾸기" : "사진 고르기"}<input type="file" accept="image/*" data-f="${i}" hidden></label>
+      ${url ? `<button class="rm" data-r="${i}">지우기</button>` : ""}
+    </div>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("input[data-n]").forEach(el => el.oninput = () => { const n = store.get("qrNames", []); for (let k = 0; k < QR_SLOTS; k++) if (n[k] == null) n[k] = QR_DEFAULT[k]; n[+el.dataset.n] = el.value.trim(); store.set("qrNames", n); });
+  box.querySelectorAll("input[data-f]").forEach(el => el.onchange = async () => {
+    const f = el.files && el.files[0]; if (!f) return;
+    try { await QRDB.put("slot" + el.dataset.f, {blob: f, at: Date.now()}); } catch (e) { alert("이 브라우저에서는 저장할 수 없어요. 사파리/크롬 일반 창에서 열어 주세요."); }
+    drawQRs();
+  });
+  box.querySelectorAll("[data-s]").forEach(b => b.onclick = () => openQR(+b.dataset.s));
+  box.querySelectorAll("[data-r]").forEach(b => b.onclick = async () => {
+    const n = qrName(+b.dataset.r) || `${+b.dataset.r + 1}번`;
+    if (!confirm(`${n} QR 사진을 이 폰에서 지울까요?`)) return;
+    await QRDB.del("slot" + b.dataset.r); drawQRs();
+  });
+}
+async function openQR(i){
+  const v = $("#qrview"); if (!qrUrls[i]) return;
+  v.querySelector("img").src = qrUrls[i];
+  v.querySelector(".who").textContent = qrName(i) || `${i + 1}번`;
+  v.classList.add("on"); history.pushState({qr: 1}, "", location.hash);
+  try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
+}
+function closeQR(){ $("#qrview").classList.remove("on"); try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest("#qrview")) history.back(); });
+
 function renderEntry(v){
   const nara = (window.LINKS_ALL || []).filter(l => l.key === "ig:DeMlN2YPB4f");
   const li = a => `<ul class="tipl">${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
-  $("#entry").innerHTML = `<div class="card"><h2>Visit Japan Web 공식 사이트</h2>
+  $("#entry").innerHTML = `<div class="card"><h2>내 QR 보기</h2><div class="qrs" id="qrs"></div>
+      <p class="count" style="margin-top:8px">Visit Japan Web QR 스크린샷을 한 번 골라 두면 <b>이 폰 안에만</b> 저장돼요. 사이트나 서버로는 올라가지 않아요. 여권 실물도 꼭 함께 보여 주세요.</p></div>
+    <div class="card"><h2>Visit Japan Web 공식 사이트</h2>
       <div class="row"><div class="k">안내</div><div class="v"><a href="${esc(v.url)}" target="_blank" rel="noopener" style="word-break:break-all">${esc(v.url.replace("https://", ""))}</a></div></div>
       ${v.loginUrl ? `<div class="row"><div class="k">등록</div><div class="v"><a href="${esc(v.loginUrl)}" target="_blank" rel="noopener">${esc(v.loginUrl.replace("https://", ""))}</a></div></div>` : ""}
       <div class="btns"><a class="btn primary" href="${esc(v.url)}" target="_blank" rel="noopener">공식 안내 (한국어)</a>${v.loginUrl ? `<a class="btn" href="${esc(v.loginUrl)}" target="_blank" rel="noopener">바로 등록·로그인</a>` : ""}</div>
@@ -427,6 +500,7 @@ function renderEntry(v){
     ${nara.length ? `<h3 class="ghead">가족이 보낸 입국 관련 링크</h3>` + nara.map(linkCard).join("") : ""}
     <p class="count">${esc(v.note)}</p>`;
   bindEmbeds($("#entry"));
+  drawQRs();
 }
 
 function renderLinks(){
