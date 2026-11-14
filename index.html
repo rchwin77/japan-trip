@@ -118,6 +118,9 @@ details.fold summary h2{margin:0}
 details.fold summary:after{content:"펼치기 ▾";font-size:13px;color:var(--sub)}
 details.fold[open] summary:after{content:"접기 ▴"}
 details.fold[open] summary{margin-bottom:8px}
+.fextra{font-size:13px;color:var(--sub);margin-top:6px}
+.seats{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.seats span{background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:13px}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:99px;font-size:14px}
@@ -237,7 +240,12 @@ function renderTrip(t){
   h += `<div class="card"><h2>항공</h2>` + t.flights.map(f => `
     <div class="row"><div class="k">${esc(f.label)}<br>${esc(f.date.slice(5).replace("-","/"))}</div>
     <div class="v"><div class="flight"><div><b>${esc(f.dep)}</b><br>${esc(f.from)}</div>
-    <div class="mid">${esc(f.airline)} ${esc(f.no)}</div><div style="text-align:right"><b>${esc(f.arr)}</b><br>${esc(f.to)}</div></div></div></div>`).join("") + `</div>`;
+    <div class="mid">${esc(f.airline)} ${esc(f.no)}</div><div style="text-align:right"><b>${esc(f.arr)}</b><br>${esc(f.to)}</div></div>
+    ${f.boarding ? `<div class="fextra">탑승 <b>${esc(f.boarding)}</b> · ${esc(f.cabin || "")} · 탑승구 ${esc(f.gate || "")}</div>` : ""}
+    ${f.seats ? `<div class="seats">${f.seats.map(x => `<span><b>${esc(x[1])}</b> ${esc(x[0])}</span>`).join("")}</div>${f.seatNote ? `<div class="fextra">${esc(f.seatNote)}</div>` : ""}` : ""}
+    </div></div>`).join("") + `</div>
+    <div class="card"><h2>내 탑승권 (WE503)</h2><div class="qrs" id="bps"></div>
+      <p class="count" style="margin-top:8px">모바일 탑승권 화면을 캡처해 골라 두면 <b>이 폰 안에만</b> 저장돼요. 예약번호·항공권번호가 있어서 사이트에는 올리지 않았어요.</p></div>`;
   h += `<div class="card"><h2>미팅 · 숙소 · 가이드</h2>
     <div class="row"><div class="k">미팅</div><div class="v"><b>${esc(t.meeting.time)}</b> ${esc(t.meeting.place)}<br><small style="color:var(--sub)">${esc(t.meeting.note)}</small></div></div>
     <div class="row"><div class="k">호텔</div><div class="v">${esc(t.hotel.name)} · <a href="route.html">전망대→호텔 가는 법</a> · <a href="https://www.google.com/maps/search/${encodeURIComponent(t.hotel.name)}" target="_blank" rel="noopener">지도</a><br><small style="color:var(--sub)">${esc(t.hotel.note)}</small></div></div>
@@ -445,41 +453,43 @@ const QRDB = { db: null,
 };
 const QR_SLOTS = 3, QR_DEFAULT = ["나", "와이프", "아들"];
 const qrName = i => { const n = store.get("qrNames", [])[i]; return n == null ? QR_DEFAULT[i] : n; };
-let qrUrls = [], wakeLock = null;
-async function drawQRs(){
-  const box = $("#qrs"); if (!box) return;
-  qrUrls.forEach(u => u && URL.revokeObjectURL(u)); qrUrls = [];
-  const names = store.get("qrNames", []);
+let qrUrls = {}, wakeLock = null;
+const QR_SETS = { qrs: {prefix: "slot", label: "QR"}, bps: {prefix: "bp", label: "탑승권"} };
+function drawQRs(){ return Promise.all(Object.keys(QR_SETS).map(drawQRSet)); }
+async function drawQRSet(boxId){
+  const box = document.getElementById(boxId); if (!box) return;
+  const set = QR_SETS[boxId];
+  (qrUrls[boxId] || []).forEach(u => u && URL.revokeObjectURL(u)); const urls = qrUrls[boxId] = [];
   let html = "";
   for (let i = 0; i < QR_SLOTS; i++) {
-    let rec = null; try { rec = await QRDB.get("slot" + i); } catch (e) {}
-    const url = rec && rec.blob ? URL.createObjectURL(rec.blob) : null; qrUrls[i] = url;
+    let rec = null; try { rec = await QRDB.get(set.prefix + i); } catch (e) {}
+    const url = rec && rec.blob ? URL.createObjectURL(rec.blob) : null; urls[i] = url;
     html += `<div class="qrslot">
       <input type="text" data-n="${i}" value="${esc(qrName(i))}" placeholder="이름 ${i + 1}" maxlength="10">
-      <div class="thumb">${url ? `<img src="${url}" alt="">` : "QR 없음"}</div>
-      ${url ? `<button class="show" data-s="${i}">QR 보기</button>` : ""}
+      <div class="thumb">${url ? `<img src="${url}" alt="">` : `${set.label} 없음`}</div>
+      ${url ? `<button class="show" data-s="${i}">${set.label} 보기</button>` : ""}
       <label class="pick">${url ? "사진 바꾸기" : "사진 고르기"}<input type="file" accept="image/*" data-f="${i}" hidden></label>
       ${url ? `<button class="rm" data-r="${i}">지우기</button>` : ""}
     </div>`;
   }
   box.innerHTML = html;
-  box.querySelectorAll("input[data-n]").forEach(el => el.oninput = () => { const n = store.get("qrNames", []); for (let k = 0; k < QR_SLOTS; k++) if (n[k] == null) n[k] = QR_DEFAULT[k]; n[+el.dataset.n] = el.value.trim(); store.set("qrNames", n); });
+  box.querySelectorAll("input[data-n]").forEach(el => el.onchange = () => { const n = store.get("qrNames", []); for (let k = 0; k < QR_SLOTS; k++) if (n[k] == null) n[k] = QR_DEFAULT[k]; n[+el.dataset.n] = el.value.trim(); store.set("qrNames", n); drawQRs(); });
   box.querySelectorAll("input[data-f]").forEach(el => el.onchange = async () => {
     const f = el.files && el.files[0]; if (!f) return;
-    try { await QRDB.put("slot" + el.dataset.f, {blob: f, at: Date.now()}); } catch (e) { alert("이 브라우저에서는 저장할 수 없어요. 사파리/크롬 일반 창에서 열어 주세요."); }
-    drawQRs();
+    try { await QRDB.put(set.prefix + el.dataset.f, {blob: f, at: Date.now()}); } catch (e) { alert("이 브라우저에서는 저장할 수 없어요. 사파리/크롬 일반 창에서 열어 주세요."); }
+    drawQRSet(boxId);
   });
-  box.querySelectorAll("[data-s]").forEach(b => b.onclick = () => openQR(+b.dataset.s));
+  box.querySelectorAll("[data-s]").forEach(b => b.onclick = () => openQR(boxId, +b.dataset.s));
   box.querySelectorAll("[data-r]").forEach(b => b.onclick = async () => {
     const n = qrName(+b.dataset.r) || `${+b.dataset.r + 1}번`;
-    if (!confirm(`${n} QR 사진을 이 폰에서 지울까요?`)) return;
-    await QRDB.del("slot" + b.dataset.r); drawQRs();
+    if (!confirm(`${n} ${set.label} 사진을 이 폰에서 지울까요?`)) return;
+    await QRDB.del(set.prefix + b.dataset.r); drawQRSet(boxId);
   });
 }
-async function openQR(i){
-  const v = $("#qrview"); if (!qrUrls[i]) return;
-  v.querySelector("img").src = qrUrls[i];
-  v.querySelector(".who").textContent = qrName(i) || `${i + 1}번`;
+async function openQR(boxId, i){
+  const v = $("#qrview"), url = (qrUrls[boxId] || [])[i]; if (!url) return;
+  v.querySelector("img").src = url;
+  v.querySelector(".who").textContent = `${qrName(i) || (i + 1) + "번"} · ${QR_SETS[boxId].label}`;
   v.classList.add("on"); history.pushState({qr: 1}, "", location.hash);
   try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
 }
@@ -537,7 +547,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); drawQRSet("bps"); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
   $("#foot").textContent = `링크 ${LINKS.length}개 (면세 ${LINKS.filter(l => l.group === "면세").length}개 포함)`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
