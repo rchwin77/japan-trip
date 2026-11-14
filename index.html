@@ -320,7 +320,7 @@ async function fromMet(pl){
     const sym = (x.data.next_1_hours || x.data.next_6_hours || {}).summary;
     const hh = +t.slice(11, 13); if (sym && (!day.icon || (hh >= 9 && hh <= 15))) day.icon = METICON(sym.symbol_code);
     const pr = (x.data.next_6_hours && x.data.next_6_hours.details) ? x.data.next_6_hours.details.precipitation_amount : null;
-    if (pr != null && hh % 6 === 0) day.rain += pr;
+    if (pr != null && new Date(x.time).getUTCHours() % 6 === 0) day.rain += pr;
   });
   const first = ts[0], sym0 = (first.data.next_1_hours || first.data.next_6_hours || {}).summary;
   return { src: "MET Norway", current: {t: first.data.instant.details.air_temperature, feels: null, icon: METICON(sym0 && sym0.symbol_code), time: jst(first.time)}, hourly,
@@ -331,8 +331,12 @@ function getWX(pl){
   return wxCache[k] || (wxCache[k] = fromOpenMeteo(pl).catch(() => fromMet(pl)).catch(e => { delete wxCache[k]; throw e; }));
 }
 function hourT(w, date, hh){
-  const v = w.hourly[`${date}T${String(hh).padStart(2, "0")}:00`];
-  return v == null ? "-" : Math.round(v) + "°";
+  for (const off of [0, -1, 1, -2, 2, -3, 3]) {
+    const h = hh + off; if (h < 0 || h > 23) continue;
+    const v = w.hourly[`${date}T${String(h).padStart(2, "0")}:00`];
+    if (v != null) return (off ? "약 " : "") + Math.round(v) + "°";
+  }
+  return "-";
 }
 const nowT = (w, d, hh, hm) => { const v = hourT(w, d, hh); return v === "-" && +hm.slice(0, 2) > hh ? "지남" : v; };
 function loadNow(t){
