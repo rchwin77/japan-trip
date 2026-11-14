@@ -258,6 +258,10 @@ function renderTrip(t){
     <div class="row"><div class="k">인원</div><div class="v">${esc(t.people)}</div></div>
     <div class="row"><div class="k">날씨</div><div class="v">${esc(t.weather)}</div></div></div>`;
   if (t.wifi) h += infoCard(t.wifi);
+  if (t.sky) h += `<div class="card"><h2>${esc(t.sky.title)}</h2>${t.sky.rows.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}<ul style="margin:8px 0 0;padding-left:20px;font-size:14px">${t.sky.tips.map(x => `<li style="margin:3px 0">${esc(x)}</li>`).join("")}</ul>
+    <h3 style="font-size:15px;margin:12px 0 6px">내 바우처 QR</h3><div class="qrs" id="sky"></div>
+    <p class="count" style="margin-top:8px">클룩 앱의 바우처 QR 화면을 캡처해 골라 두면 <b>이 폰 안에만</b> 저장돼요.</p>
+    <div class="btns"><a class="btn" href="route.html">전망대 → 호텔 가는 법</a><a class="btn" href="${esc(t.sky.url)}" target="_blank" rel="noopener">찾아가는 길 (공식)</a></div></div>`;
   h += t.days.map(d => `<div class="card day ${d.date === today ? "today" : ""}">
     <div class="head"><h2>${d.day}일차 · ${esc(d.title)}</h2><span>${esc(d.date.slice(5).replace("-","/"))} (${esc(d.dow)})</span></div>
     ${d.items.map(i => `<div class="item ${i.pending ? "pending" : ""} ${i.note ? "sub" : ""}"><div class="t">${esc(i.time || "")}</div><div>${i.link ? `<a href="${esc(i.link)}">${esc(i.text)}</a>` : esc(i.text)}</div></div>`).join("")}
@@ -498,7 +502,7 @@ const QRDB = { db: null,
 const QR_SLOTS = 3, QR_DEFAULT = ["나", "와이프", "아들"];
 const qrName = i => { const n = store.get("qrNames", [])[i]; return n == null ? QR_DEFAULT[i] : n; };
 let qrUrls = {}, wakeLock = null;
-const QR_SETS = { qrs: {prefix: "slot", label: "QR"}, bps: {prefix: "bp", label: "탑승권"} };
+const QR_SETS = { qrs: {prefix: "slot", label: "QR"}, bps: {prefix: "bp", label: "탑승권"}, sky: {prefix: "sky", label: "바우처"} };
 function drawQRs(){ return Promise.all(Object.keys(QR_SETS).map(drawQRSet)); }
 async function drawQRSet(boxId){
   const box = document.getElementById(boxId); if (!box) return;
@@ -591,7 +595,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); drawQRSet("bps"); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); drawQRSet("bps"); drawQRSet("sky"); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
   $("#foot").textContent = `링크 ${LINKS.length}개 (면세 ${LINKS.filter(l => l.group === "면세").length}개 포함)`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
