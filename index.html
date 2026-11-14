@@ -296,22 +296,54 @@ function renderParking(pk){
   $("#parkSpot").oninput = e => store.set("parkSpot", e.target.value);
 }
 
-function hourT(r, date, hh){
-  if (!r.hourly) return "-";
-  const i = r.hourly.time.indexOf(`${date}T${String(hh).padStart(2, "0")}:00`);
-  return i < 0 || r.hourly.temperature_2m[i] == null ? "-" : Math.round(r.hourly.temperature_2m[i]) + "°";
+// ---- 날씨: Open-Meteo 먼저, 안 되면 노르웨이 기상청(MET Norway)으로 ----
+const wxCache = {};
+function withTimeout(url, ms){ const ac = new AbortController(); const id = setTimeout(() => ac.abort(), ms); return fetch(url, {signal: ac.signal}).finally(() => clearTimeout(id)); }
+const jst = iso => { const d = new Date(new Date(iso).getTime() + 9 * 3600e3); return d.toISOString().slice(0, 16); };
+const METICON = c => { c = c || ""; return c.includes("thunder") ? "⛈️" : c.includes("snow") ? "🌨️" : c.includes("showers") ? "🌦️" : (c.includes("rain") || c.includes("sleet")) ? "🌧️" : c.startsWith("fog") ? "🌫️" : c.startsWith("cloudy") ? "☁️" : c.startsWith("partlycloudy") ? "⛅" : c.startsWith("fair") ? "🌤️" : c.startsWith("clearsky") ? "☀️" : "🌡️"; };
+async function fromOpenMeteo(pl){
+  const r = await (await withTimeout(`https://api.open-meteo.com/v1/forecast?latitude=${pl.lat}&longitude=${pl.lon}&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=16`, 7000)).json();
+  if (!r.current || !r.daily) throw 0;
+  const hourly = {}; r.hourly.time.forEach((t, i) => hourly[t] = r.hourly.temperature_2m[i]);
+  return { src: "Open-Meteo", current: {t: r.current.temperature_2m, feels: r.current.apparent_temperature, icon: WMO(r.current.weather_code), time: r.current.time}, hourly,
+    daily: r.daily.time.map((d, i) => ({date: d, min: r.daily.temperature_2m_min[i], max: r.daily.temperature_2m_max[i], icon: WMO(r.daily.weather_code[i]), pop: r.daily.precipitation_probability_max[i]})) };
 }
+async function fromMet(pl){
+  const r = await (await withTimeout(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${pl.lat}&lon=${pl.lon}`, 9000)).json();
+  const ts = r.properties && r.properties.timeseries; if (!ts || !ts.length) throw 0;
+  const hourly = {}, days = {};
+  ts.forEach(x => {
+    const t = jst(x.time), temp = x.data.instant.details.air_temperature, d = t.slice(0, 10);
+    hourly[t.slice(0, 13) + ":00"] = temp;
+    const day = days[d] || (days[d] = {date: d, min: temp, max: temp, icon: null, rain: 0});
+    day.min = Math.min(day.min, temp); day.max = Math.max(day.max, temp);
+    const sym = (x.data.next_1_hours || x.data.next_6_hours || {}).summary;
+    const hh = +t.slice(11, 13); if (sym && (!day.icon || (hh >= 9 && hh <= 15))) day.icon = METICON(sym.symbol_code);
+    const pr = (x.data.next_6_hours && x.data.next_6_hours.details) ? x.data.next_6_hours.details.precipitation_amount : null;
+    if (pr != null && hh % 6 === 0) day.rain += pr;
+  });
+  const first = ts[0], sym0 = (first.data.next_1_hours || first.data.next_6_hours || {}).summary;
+  return { src: "MET Norway", current: {t: first.data.instant.details.air_temperature, feels: null, icon: METICON(sym0 && sym0.symbol_code), time: jst(first.time)}, hourly,
+    daily: Object.values(days).map(d => ({...d, pop: null})) };
+}
+function getWX(pl){
+  const k = pl.lat + "," + pl.lon;
+  return wxCache[k] || (wxCache[k] = fromOpenMeteo(pl).catch(() => fromMet(pl)).catch(e => { delete wxCache[k]; throw e; }));
+}
+function hourT(w, date, hh){
+  const v = w.hourly[`${date}T${String(hh).padStart(2, "0")}:00`];
+  return v == null ? "-" : Math.round(v) + "°";
+}
+const nowT = (w, d, hh, hm) => { const v = hourT(w, d, hh); return v === "-" && +hm.slice(0, 2) > hh ? "지남" : v; };
 function loadNow(t){
   const today = t.days.find(d => d.date === todayStr());
   const pl = today && today.day === 3 && t.weatherPlaces[1] ? t.weatherPlaces[1] : t.weatherPlaces[0];
-  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pl.lat}&longitude=${pl.lon}&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m&timezone=Asia%2FTokyo&forecast_days=1`)
-    .then(r => r.json()).then(r => {
-      if (!r.current) throw 0;
-      const d = r.current.time.slice(0, 10), hm = r.current.time.slice(11, 16);
-      $("#nowwx").innerHTML = `<div class="nowrow"><div class="big">${WMO(r.current.weather_code)} ${Math.round(r.current.temperature_2m)}°</div>
-        <div><div class="nm">지금 ${esc(pl.name.split(" ")[0])} 날씨</div><div class="count" style="margin:0">체감 ${Math.round(r.current.apparent_temperature)}° · 일본 시간 ${hm}</div></div></div>
-        <div class="hh"><div><span>오늘 12시경</span><b>${hourT(r, d, 12)}</b></div><div><span>오늘 20시경</span><b>${hourT(r, d, 20)}</b></div></div>`;
-    }).catch(() => { $("#nowwx").innerHTML = `<p class="count">지금 날씨를 못 불러왔어요. 인터넷 연결을 확인해 주세요.</p>`; });
+  getWX(pl).then(w => {
+    const d = w.current.time.slice(0, 10), hm = w.current.time.slice(11, 16);
+    $("#nowwx").innerHTML = `<div class="nowrow"><div class="big">${w.current.icon} ${Math.round(w.current.t)}°</div>
+      <div><div class="nm">지금 ${esc(pl.name.split(" ")[0])} 날씨</div><div class="count" style="margin:0">${w.current.feels != null ? `체감 ${Math.round(w.current.feels)}° · ` : ""}일본 시간 ${hm} 기준</div></div></div>
+      <div class="hh"><div><span>오늘 12시경</span><b>${nowT(w, d, 12, hm)}</b></div><div><span>오늘 20시경</span><b>${nowT(w, d, 20, hm)}</b></div></div>`;
+  }).catch(() => { $("#nowwx").innerHTML = `<p class="count">지금 날씨를 못 불러왔어요. 잠시 후 새로고침해 주세요.</p>`; });
 }
 
 function renderFood(f){
@@ -400,12 +432,15 @@ function renderTools(t){
 
   // weather
   const s0 = t.days[0].date, s1 = t.days.at(-1).date;
-  Promise.all(t.weatherPlaces.map(pl => fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pl.lat}&longitude=${pl.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m&timezone=Asia%2FTokyo&start_date=${s0}&end_date=${s1}`).then(r => r.json())))
-  .then(rs => {
-    $("#wx").innerHTML = rs.map((r, k) => !r.daily ? "" : `<p class="count" style="margin:8px 0 6px">${esc(t.weatherPlaces[k].name)}</p><div class="wx">${r.daily.time.map((d, i) => `<div><span class="t">${d.slice(5).replace("-", "/")}</span><b>${WMO(r.daily.weather_code[i])}</b>${Math.round(r.daily.temperature_2m_min[i])}° / ${Math.round(r.daily.temperature_2m_max[i])}°<br>☂ ${r.daily.precipitation_probability_max[i] ?? "-"}%<br><small>12시 ${hourT(r, d, 12)}<br>20시 ${hourT(r, d, 20)}</small></div>`).join("")}</div>`).join("")
-      + `<p class="count" style="margin-top:8px">Open-Meteo 예보 · 열 때마다 새로 받아요</p>`;
-    if (!rs.some(r => r.daily)) throw 0;
-  }).catch(() => { $("#wx").innerHTML = `<p class="count">예보를 아직 못 받았어요 (여행 16일 전부터 나와요). 가이드 안내: ${esc(t.weather)}</p>`; });
+  Promise.allSettled(t.weatherPlaces.map(getWX)).then(rs => {
+    const ok = rs.filter(r => r.status === "fulfilled");
+    if (!ok.length) throw 0;
+    $("#wx").innerHTML = rs.map((r, k) => {
+      if (r.status !== "fulfilled") return "";
+      const w = r.value, days = w.daily.filter(d => d.date >= s0 && d.date <= s1);
+      return `<p class="count" style="margin:8px 0 6px">${esc(t.weatherPlaces[k].name)}</p>` + (days.length ? `<div class="wx">${days.map(d => `<div><span class="t">${d.date.slice(5).replace("-", "/")}</span><b>${d.icon || "🌡️"}</b>${Math.round(d.min)}° / ${Math.round(d.max)}°<br>${d.pop != null ? `☂ ${d.pop}%` : d.rain != null ? `☂ ${d.rain.toFixed(1)}mm` : ""}<br><small>12시 ${hourT(w, d.date, 12)}<br>20시 ${hourT(w, d.date, 20)}</small></div>`).join("")}</div>` : `<p class="count">아직 예보 범위 밖이에요.</p>`);
+    }).join("") + `<p class="count" style="margin-top:8px">${esc(ok[0].value.src)} 예보 · 열 때마다 새로 받아요</p>`;
+  }).catch(() => { $("#wx").innerHTML = `<p class="count">예보를 못 받았어요. 잠시 후 새로고침해 주세요. 가이드 안내: ${esc(t.weather)}</p>`; });
 }
 
 let LINKS = [], GROUPS = [], filter = store.get("gfilter", "all");
