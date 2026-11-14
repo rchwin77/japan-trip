@@ -242,6 +242,7 @@ function renderTrip(t){
     <div class="row"><div class="k">${esc(f.label)}<br>${esc(f.date.slice(5).replace("-","/"))}</div>
     <div class="v"><div class="flight"><div><b>${esc(f.dep)}</b><br>${esc(f.from)}</div>
     <div class="mid">${esc(f.airline)} ${esc(f.no)}</div><div style="text-align:right"><b>${esc(f.arr)}</b><br>${esc(f.to)}</div></div>
+    ${f.checkin ? `<div class="fextra">${esc(f.checkin)}</div>` : ""}
     ${f.boarding ? `<div class="fextra">탑승 <b>${esc(f.boarding)}</b> · ${esc(f.cabin || "")} · 탑승구 ${esc(f.gate || "")}</div>` : ""}
     ${f.seats ? `<div class="seats">${f.seats.map(x => `<span><b>${esc(x[1])}</b> ${esc(x[0])}</span>`).join("")}</div>${f.seatNote ? `<div class="fextra">${esc(f.seatNote)}</div>` : ""}` : ""}
     ${f.seatMap ? `<a href="${esc(f.seatMap)}" target="_blank" rel="noopener"><img class="seatmap" src="${esc(f.seatMap)}" alt="좌석 배치도: 32A·32C·32D" loading="lazy"></a>` : ""}
@@ -249,6 +250,7 @@ function renderTrip(t){
     <div class="card"><h2>내 탑승권 (WE503)</h2><div class="qrs" id="bps"></div>
       <p class="count" style="margin-top:8px">모바일 탑승권 화면을 캡처해 골라 두면 <b>이 폰 안에만</b> 저장돼요. 예약번호·항공권번호가 있어서 사이트에는 올리지 않았어요.</p></div>`;
   h += `<div class="card"><h2>미팅 · 숙소 · 가이드</h2>
+    ${t.checkin ? `<div class="row"><div class="k">탑승수속</div><div class="v"><b>${esc(t.checkin.place)}</b><br>${esc(t.checkin.time)}<br><small style="color:var(--sub)">${esc(t.checkin.note)}</small></div></div>` : ""}
     <div class="row"><div class="k">미팅</div><div class="v"><b>${esc(t.meeting.time)}</b> ${esc(t.meeting.place)}<br><small style="color:var(--sub)">${esc(t.meeting.note)}</small></div></div>
     <div class="row"><div class="k">호텔</div><div class="v">${esc(t.hotel.name)} · <a href="route.html">전망대→호텔 가는 법</a> · <a href="https://www.google.com/maps/search/${encodeURIComponent(t.hotel.name)}" target="_blank" rel="noopener">지도</a><br><small style="color:var(--sub)">${esc(t.hotel.note)}</small></div></div>
     <div class="row"><div class="k">가이드</div><div class="v">${esc(t.guide.name)}${t.guide.phone ? ` · <a href="tel:${esc(t.guide.phone.replace(/-/g,""))}">${esc(t.guide.phone)}</a>` : ""}<br><small style="color:var(--sub)">${esc(t.guide.note)}</small></div></div>
