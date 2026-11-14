@@ -222,6 +222,9 @@ addEventListener("popstate", () => {
   if (qv && qv.classList.contains("on")) { closeQR(); return; }
   showTab(location.hash.slice(1) || "plan");
 });
+// 바우처 키 링크(#k=...): 키는 주소 # 뒤에만 있어 서버로 안 가요. 읽고 바로 주소에서 지움
+const SKYKEY = location.hash.startsWith("#k=") ? location.hash.slice(3) : null;
+if (SKYKEY) history.replaceState(null, "", "#plan");
 {
   const start = location.hash.slice(1) || store.get("tab", "plan");
   history.replaceState({tab: start}, "", "#" + (TABS.includes(start) ? start : "plan"));
@@ -260,7 +263,8 @@ function renderTrip(t){
   if (t.wifi) h += infoCard(t.wifi);
   if (t.sky) h += `<div class="card"><h2>${esc(t.sky.title)}</h2>${t.sky.rows.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}<ul style="margin:8px 0 0;padding-left:20px;font-size:14px">${t.sky.tips.map(x => `<li style="margin:3px 0">${esc(x)}</li>`).join("")}</ul>
     <h3 style="font-size:15px;margin:12px 0 6px">내 바우처 QR</h3><div class="qrs" id="sky"></div>
-    <p class="count" style="margin-top:8px">클룩 앱의 바우처 QR 화면을 캡처해 골라 두면 <b>이 폰 안에만</b> 저장돼요.</p>
+    <p class="count" style="margin-top:8px" id="skymsg">가족 카톡방의 <b>바우처 링크</b>를 한 번 누르면 3명 QR이 <b>이 폰 안에만</b> 저장돼요. 사이트에는 잠긴 파일만 있어서 링크 없이는 못 열어요. 직접 캡처해 골라 넣어도 돼요.</p>
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="skykey" placeholder="링크나 열쇠 붙여넣기" style="flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:14px"><button id="skygo" class="btn" style="margin:0;padding:10px 14px">넣기</button></div>
     <div class="btns"><a class="btn" href="route.html">전망대 → 호텔 가는 법</a><a class="btn" href="${esc(t.sky.url)}" target="_blank" rel="noopener">찾아가는 길 (공식)</a></div></div>`;
   h += t.days.map(d => `<div class="card day ${d.date === today ? "today" : ""}">
     <div class="head"><h2>${d.day}일차 · ${esc(d.title)}</h2><span>${esc(d.date.slice(5).replace("-","/"))} (${esc(d.dow)})</span></div>
@@ -534,6 +538,23 @@ async function drawQRSet(boxId){
     await QRDB.del(set.prefix + b.dataset.r); drawQRSet(boxId);
   });
 }
+async function importSky(key){
+  const msg = t => { const el = document.getElementById("skymsg"); if (el) el.textContent = t; };
+  try {
+    key = key.trim().replace(/^.*#k=/, "");
+    const b64u = x => Uint8Array.from(atob(x.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((x.length + 3) % 4)), c => c.charCodeAt(0));
+    const enc = await (await fetch("img/sky.enc.json", {cache: "no-store"})).json();
+    const k = await crypto.subtle.importKey("raw", b64u(key), "AES-GCM", false, ["decrypt"]);
+    const pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64u(enc.iv)}, k, Uint8Array.from(atob(enc.ct), c => c.charCodeAt(0)));
+    const imgs = JSON.parse(new TextDecoder().decode(pt));
+    for (const i of Object.keys(imgs)) {
+      const bin = Uint8Array.from(atob(imgs[i]), c => c.charCodeAt(0));
+      await QRDB.put("sky" + i, {blob: new Blob([bin], {type: "image/png"}), at: Date.now()});
+    }
+    await drawQRSet("sky"); msg("바우처 3장을 이 폰에 넣었어요 ✓");
+    const c = document.getElementById("sky"); if (c) c.scrollIntoView({block: "center"});
+  } catch (e) { msg("열쇠가 맞지 않거나 저장할 수 없어요. 카톡으로 받은 링크를 다시 눌러 보세요."); }
+}
 async function openQR(boxId, i){
   const v = $("#qrview"), url = (qrUrls[boxId] || [])[i]; if (!url) return;
   v.querySelector("img").src = url;
@@ -595,7 +616,7 @@ Promise.all([
   fetch("trip.json", {cache: "no-cache"}).then(r => r.json()),
   fetch("links.json", {cache: "no-cache"}).then(r => r.json())
 ]).then(([trip, links]) => {
-  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); drawQRSet("bps"); drawQRSet("sky"); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
+  renderTrip(trip); if (trip.food) renderFood(trip.food); if (trip.shopping) renderShop(trip.shopping); if (trip.emergency) renderTools(trip); drawQRSet("bps"); drawQRSet("sky"); { const g = document.getElementById("skygo"); if (g) g.onclick = () => importSky(document.getElementById("skykey").value); } if (SKYKEY) importSky(SKYKEY); loadNow(trip); if (trip.parking) renderParking(trip.parking); LINKS = links.links; window.LINKS_ALL = LINKS; GROUPS = (links.groups || []).filter(g => g !== "면세"); renderLinks(); if (trip.shopping) renderTaxfree(trip.shopping); if (trip.vjw) renderEntry(trip.vjw);
   $("#foot").textContent = `링크 ${LINKS.length}개 (면세 ${LINKS.filter(l => l.group === "면세").length}개 포함)`;
 }).catch(e => { $("#plan").innerHTML = `<div class="note">데이터를 불러오지 못했어요: ${esc(e.message)}</div>`; });
 </script>
