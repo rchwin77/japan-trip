@@ -346,7 +346,7 @@ function loadNow(t){
     const d = w.current.time.slice(0, 10), hm = w.current.time.slice(11, 16);
     $("#nowwx").innerHTML = `<div class="nowrow"><div class="big">${w.current.icon} ${Math.round(w.current.t)}°</div>
       <div><div class="nm">지금 ${esc(pl.name.split(" ")[0])} 날씨</div><div class="count" style="margin:0">${w.current.feels != null ? `체감 ${Math.round(w.current.feels)}° · ` : ""}일본 시간 ${hm} 기준</div></div></div>
-      <div class="hh"><div><span>오늘 12시경</span><b>${nowT(w, d, 12, hm)}</b></div><div><span>오늘 20시경</span><b>${nowT(w, d, 20, hm)}</b></div></div>`;
+      <div class="hh"><div><span>오늘 8시경</span><b>${nowT(w, d, 8, hm)}</b></div><div><span>오늘 12시경</span><b>${nowT(w, d, 12, hm)}</b></div><div><span>오늘 20시경</span><b>${nowT(w, d, 20, hm)}</b></div></div>`;
   }).catch(() => { $("#nowwx").innerHTML = `<p class="count">지금 날씨를 못 불러왔어요. 잠시 후 새로고침해 주세요.</p>`; });
 }
 
@@ -442,7 +442,7 @@ function renderTools(t){
     $("#wx").innerHTML = rs.map((r, k) => {
       if (r.status !== "fulfilled") return "";
       const w = r.value, days = w.daily.filter(d => d.date >= s0 && d.date <= s1);
-      return `<p class="count" style="margin:8px 0 6px">${esc(t.weatherPlaces[k].name)}</p>` + (days.length ? `<div class="wx">${days.map(d => `<div><span class="t">${d.date.slice(5).replace("-", "/")}</span><b>${d.icon || "🌡️"}</b>${Math.round(d.min)}° / ${Math.round(d.max)}°<br>${d.pop != null ? `☂ ${d.pop}%` : d.rain != null ? `☂ ${d.rain.toFixed(1)}mm` : ""}<br><small>12시 ${hourT(w, d.date, 12)}<br>20시 ${hourT(w, d.date, 20)}</small></div>`).join("")}</div>` : `<p class="count">아직 예보 범위 밖이에요.</p>`);
+      return `<p class="count" style="margin:8px 0 6px">${esc(t.weatherPlaces[k].name)}</p>` + (days.length ? `<div class="wx">${days.map(d => `<div><span class="t">${d.date.slice(5).replace("-", "/")}</span><b>${d.icon || "🌡️"}</b>${Math.round(d.min)}° / ${Math.round(d.max)}°<br>${d.pop != null ? `☂ ${d.pop}%` : d.rain != null ? `☂ ${d.rain.toFixed(1)}mm` : ""}<br><small>8시 ${hourT(w, d.date, 8)}<br>12시 ${hourT(w, d.date, 12)}<br>20시 ${hourT(w, d.date, 20)}</small></div>`).join("")}</div>` : `<p class="count">아직 예보 범위 밖이에요.</p>`);
     }).join("") + `<p class="count" style="margin-top:8px">${esc(ok[0].value.src)} 예보 · 열 때마다 새로 받아요</p>`;
   }).catch(() => { $("#wx").innerHTML = `<p class="count">예보를 못 받았어요. 잠시 후 새로고침해 주세요. 가이드 안내: ${esc(t.weather)}</p>`; });
 }
