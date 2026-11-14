@@ -119,6 +119,7 @@ details.fold summary:after{content:"펼치기 ▾";font-size:13px;color:var(--su
 details.fold[open] summary:after{content:"접기 ▴"}
 details.fold[open] summary{margin-bottom:8px}
 .fextra{font-size:13px;color:var(--sub);margin-top:6px}
+.seatmap{display:block;width:100%;margin-top:8px;border-radius:10px;border:1px solid var(--line);background:#fff}
 .seats{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .seats span{background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:13px}
 .note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
@@ -243,6 +244,7 @@ function renderTrip(t){
     <div class="mid">${esc(f.airline)} ${esc(f.no)}</div><div style="text-align:right"><b>${esc(f.arr)}</b><br>${esc(f.to)}</div></div>
     ${f.boarding ? `<div class="fextra">탑승 <b>${esc(f.boarding)}</b> · ${esc(f.cabin || "")} · 탑승구 ${esc(f.gate || "")}</div>` : ""}
     ${f.seats ? `<div class="seats">${f.seats.map(x => `<span><b>${esc(x[1])}</b> ${esc(x[0])}</span>`).join("")}</div>${f.seatNote ? `<div class="fextra">${esc(f.seatNote)}</div>` : ""}` : ""}
+    ${f.seatMap ? `<a href="${esc(f.seatMap)}" target="_blank" rel="noopener"><img class="seatmap" src="${esc(f.seatMap)}" alt="좌석 배치도: 32A·32C·32D" loading="lazy"></a>` : ""}
     </div></div>`).join("") + `</div>
     <div class="card"><h2>내 탑승권 (WE503)</h2><div class="qrs" id="bps"></div>
       <p class="count" style="margin-top:8px">모바일 탑승권 화면을 캡처해 골라 두면 <b>이 폰 안에만</b> 저장돼요. 예약번호·항공권번호가 있어서 사이트에는 올리지 않았어요.</p></div>`;
