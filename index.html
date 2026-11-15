@@ -287,7 +287,7 @@ function renderTrip(t){
 }
 
 function infoCard(o){
-  return `<div class="card"><h2>${esc(o.title)}</h2>${o.rows.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v">${esc(r[1])}</div></div>`).join("")}
+  return `<div class="card"><h2>${esc(o.title)}</h2>${o.rows.map(r => `<div class="row"><div class="k">${esc(r[0])}</div><div class="v"${r[1] === "__WIFIPW__" ? ' id="wifipw"' : ""}>${r[1] === "__WIFIPW__" ? (store.get("wifiPw", "") ? `<b style="font-size:18px;letter-spacing:1px">${esc(store.get("wifiPw", ""))}</b>` : `<small style="color:var(--sub)">가족 카톡방의 바우처 링크를 한 번 누르면 이 폰에 보여요 (기기 뒷면 스티커에도 있어요)</small>`) : esc(r[1])}</div></div>`).join("")}
     ${o.tip ? `<div class="note" style="margin:10px 0 0">${esc(o.tip)}</div>` : ""}
     ${o.links ? `<div class="btns">${o.links.map(l => `<a class="btn" href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])}</a>`).join("")}</div>` : ""}
     ${o.source ? `<p class="count" style="margin-top:8px">${esc(o.source)}</p>` : ""}</div>`;
@@ -547,6 +547,7 @@ async function importSky(key){
     const k = await crypto.subtle.importKey("raw", b64u(key), "AES-GCM", false, ["decrypt"]);
     const pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64u(enc.iv)}, k, Uint8Array.from(atob(enc.ct), c => c.charCodeAt(0)));
     const imgs = JSON.parse(new TextDecoder().decode(pt));
+    if (imgs.wifi) { store.set("wifiPw", imgs.wifi); delete imgs.wifi; const w = document.getElementById("wifipw"); if (w) w.innerHTML = `<b style="font-size:18px;letter-spacing:1px">${esc(store.get("wifiPw", ""))}</b>`; }
     for (const i of Object.keys(imgs)) {
       const bin = Uint8Array.from(atob(imgs[i]), c => c.charCodeAt(0));
       await QRDB.put("sky" + i, {blob: new Blob([bin], {type: "image/png"}), at: Date.now()});
