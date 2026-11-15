@@ -266,6 +266,7 @@ function renderTrip(t){
     <p class="count" style="margin-top:8px" id="skymsg">가족 카톡방의 <b>바우처 링크</b>를 한 번 누르면 3명 QR이 <b>이 폰 안에만</b> 저장돼요. 사이트에는 잠긴 파일만 있어서 링크 없이는 못 열어요. 직접 캡처해 골라 넣어도 돼요.</p>
     <div style="display:flex;gap:6px;margin-top:6px"><input id="skykey" placeholder="링크나 열쇠 붙여넣기" style="flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:14px"><button id="skygo" class="btn" style="margin:0;padding:10px 14px">넣기</button></div>
     <div class="btns"><a class="btn" href="route.html">전망대 → 호텔 가는 법</a><a class="btn" href="${esc(t.sky.url)}" target="_blank" rel="noopener">찾아가는 길 (공식)</a></div></div>`;
+  if (t.scheduleImage) h += `<div class="card"><h2>최종 확정일정표 (노랑풍선)</h2><a href="${esc(t.scheduleImage)}" target="_blank" rel="noopener"><img class="seatmap" src="${esc(t.scheduleImage)}" alt="노랑풍선 확정일정표" loading="lazy"></a><p class="count" style="margin-top:6px">눌러서 크게 보기</p></div>`;
   h += t.days.map(d => `<div class="card day ${d.date === today ? "today" : ""}">
     <div class="head"><h2>${d.day}일차 · ${esc(d.title)}</h2><span>${esc(d.date.slice(5).replace("-","/"))} (${esc(d.dow)})</span></div>
     ${d.items.map(i => `<div class="item ${i.pending ? "pending" : ""} ${i.note ? "sub" : ""}"><div class="t">${esc(i.time || "")}</div><div>${i.link ? `<a href="${esc(i.link)}">${esc(i.text)}</a>` : esc(i.text)}</div></div>`).join("")}
